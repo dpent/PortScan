@@ -1,2 +1,7 @@
 #Build directory
 /build
+/out
+
+#VS directories
+/.vs
+/.vscode

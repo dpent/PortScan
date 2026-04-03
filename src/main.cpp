@@ -4,6 +4,17 @@
 
 int main(){
 
+#ifdef _WIN32
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        std::cout << "WSAStartup failed" << std::endl;
+        return false;
+    }
+    else {
+        std::cout<<"WSAStartup successful" << std::endl;
+    }
+#endif
+
     TCPSocket socket;
     if(socket.connectTo("127.0.0.1", 27017)){
         std::cout<<"Connected to port 27017"<<std::endl;

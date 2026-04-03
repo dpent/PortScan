@@ -13,7 +13,7 @@ bool UDPSocket::connectTo(const char* ip, int port){
     addr.sin_port = htons(port);
     
     #ifdef _WIN32
-    addr.sin_addr.s_addr = inet_addr(ip);
+    addr.sin_addr.s_addr = inet_pton(AF_INET, ip, &(addr.sin_addr));
     #else
     inet_pton(AF_INET, ip, &addr.sin_addr);
     #endif
