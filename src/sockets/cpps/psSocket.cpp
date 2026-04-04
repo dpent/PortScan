@@ -20,3 +20,7 @@ bool psSocket::sendBytes(char* buffer, int length){
 char* psSocket::receiveBytes(){
     return nullptr;
 }
+
+std::string psSocket::scanPort(const char* ip, int port){
+    return "Stuff";
+}

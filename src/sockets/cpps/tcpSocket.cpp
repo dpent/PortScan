@@ -1,5 +1,4 @@
 #include "../headers/tcpSocket.h"
-#include <iostream>
 
 TCPSocket::TCPSocket() : psSocket(){
     return;
@@ -55,4 +54,26 @@ char* TCPSocket::receiveBytes(){
     }
 
     return buffer;
+}
+
+std::string TCPSocket::scanPort(const char* ip, int port){
+    if(connectTo(ip, port)){
+        std::cout<<"Connected to port "<<port<<std::endl;
+        
+        sendBytes((char*)"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n", 36);
+        std::cout<<"Sent data"<<std::endl;
+
+        char* response = receiveBytes();
+        if(response){
+            //std::cout<<"Received response: "<<response<<std::endl;
+            delete[] response;
+        }
+
+        disconnect();
+        std::cout<<"Disconnected"<<std::endl;
+    }else{
+        std::cout<<"Failed to connect"<<std::endl;
+    }
+
+    return "Type shit";
 }

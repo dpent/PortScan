@@ -10,4 +10,5 @@ class TCPSocket : public psSocket{
         void disconnect() override;
         bool sendBytes(char* buffer, int length) override;
         char* receiveBytes() override;
+        std::string scanPort(const char* ip, int port) override;
 };

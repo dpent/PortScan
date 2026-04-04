@@ -1,4 +1,6 @@
 #pragma once
+#include <string>
+#include <iostream>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -31,5 +33,6 @@ class psSocket{ // Base socket class. Is the OS agnostic interface.
         virtual void disconnect();
         virtual bool sendBytes(char* buffer, int length);
         virtual char* receiveBytes();
+        virtual std::string scanPort(const char* ip, int port);
     
 };
