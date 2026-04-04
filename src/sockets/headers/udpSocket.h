@@ -9,6 +9,6 @@ class UDPSocket : public psSocket{
         bool connectTo(const char* ip, int port) override;
         void disconnect() override;
         bool sendBytes(char* buffer, int length) override;
-        char* receiveBytes() override;
+        Response receiveBytes() override;
         std::string scanPort(const char* ip, int port) override;
 };

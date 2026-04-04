@@ -145,6 +145,34 @@ int main(int argc, char* argv[]){
 #endif
 
     psSocket* socket;
+    
+    auto allIt = std::find(args.letters.begin(), args.letters.end(), 'b');
+    if(allIt != args.letters.end()){
+        socket = new TCPSocket();
+        
+        for(const std::string& ip : ipsToScan){
+            for(int& port : portsToScan){
+                std::string result = socket->scanPort(ip.c_str(), port);
+                std::cout << ip << ":" << port << " - " << result << std::endl;
+            }
+        }
+
+        delete socket;
+
+        socket = new UDPSocket();
+        
+        for(const std::string& ip : ipsToScan){
+            for(int& port : portsToScan){
+                std::string result = socket->scanPort(ip.c_str(), port);
+                std::cout << ip << ":" << port << " - " << result << std::endl;
+            }
+        }
+        delete socket;
+
+        return 0;
+    }
+
+
     auto it = std::find(args.letters.begin(), args.letters.end(), 'u');
 
     if(it != args.letters.end()){
@@ -161,5 +189,7 @@ int main(int argc, char* argv[]){
         }
     }
 
+    delete socket;
+    
     return 0;
 }

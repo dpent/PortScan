@@ -15,9 +15,21 @@ bool UDPSocket::connectTo(const char* ip, int port){
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     
+    
     #ifdef _WIN32
-    addr.sin_addr.s_addr = inet_pton(AF_INET, ip, &(addr.sin_addr));
+
+    DWORD timeout = 2000; // 2 seconds in ms
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+
+    inet_pton(AF_INET, ip, &(addr.sin_addr));
     #else
+
+    timeval tv;
+    tv.tv_sec = 2;   // 2 seconds
+    tv.tv_usec = 0;
+
+    setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
     inet_pton(AF_INET, ip, &addr.sin_addr);
     #endif
     return ::connect(s, (sockaddr*)&addr, sizeof(addr)) == 0;
@@ -43,7 +55,7 @@ bool UDPSocket::sendBytes(char* buffer, int length){
     return bytesSent == length;
 }
 
-char* UDPSocket::receiveBytes(){
+Response UDPSocket::receiveBytes(){
     char* buffer = new char[1024];
     socklen_t addrLen = sizeof(addr);
     
@@ -54,30 +66,84 @@ char* UDPSocket::receiveBytes(){
     #endif
     if(bytesReceived < 0){
         delete[] buffer;
-        return nullptr;
+        return {nullptr, 0};
     }
 
-    return buffer;
+    return {buffer, bytesReceived};
 }
 
 std::string UDPSocket::scanPort(const char* ip, int port){
-    if(connectTo(ip, port)){
-        std::cout<<"Connected to port "<<port<<std::endl;
-        
-        sendBytes((char*)"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n", 36);
-        std::cout<<"Sent data"<<std::endl;
 
-        char* response = receiveBytes();
-        if(response){
-            //std::cout<<"Received response: "<<response<<std::endl;
-            delete[] response;
+    std::string scanResult = "Nothing on this port";
+
+    if(connectTo(ip, port)){
+
+        scanResult = "[-] No response (open|filtered)";
+
+        //Send mock NTP query
+        std::vector<uint8_t> query = psSocket::buildNTPQuery();
+        sendBytes((char*)query.data(), query.size());
+    
+        Response response = receiveBytes();
+        if(response.data && response.length >= 48){
+    
+            scanResult = "[+] NTP Detected. Got a response to a mock NTP query.";
+            delete[] response.data;
+            return scanResult;
+        }
+    
+        disconnect();
+
+    }else{
+
+    }
+
+    if(connectTo(ip, port)){
+
+        scanResult = "[-] No response (open|filtered)";
+
+        //Send mock DNS query
+        std::vector<uint8_t> query = psSocket::buildDNSQuery("google.com");
+        sendBytes((char*)query.data(), query.size());
+    
+        Response response = receiveBytes();
+        if(response.data && response.length >= 48){
+    
+            scanResult = "[+] DNS Detected. Got a response to a mock DNS query.";
+            delete[] response.data;
+            return scanResult;
+        }
+    
+        disconnect();
+
+    }else{
+
+    }
+
+    if(connectTo(ip, port)){
+
+        scanResult = "[-] No response (open|filtered)";
+        //std::cout<<"Connected to port "<<port<<std::endl;
+        
+        //Send mock SNMP query
+        std::vector<uint8_t> query = psSocket::buildSNMPQuery();
+        sendBytes((char*)query.data(), query.size());
+        //std::cout<<"Sent data"<<std::endl;
+
+        Response response = receiveBytes();
+        if(response.data && response.length > 10){
+
+            scanResult = "[+] SNMP Detected. Got a response to a mock SNMP query.";
+            delete[] response.data;
+            return scanResult;
         }
 
         disconnect();
-        std::cout<<"Disconnected"<<std::endl;
+
+        //std::cout<<"Disconnected"<<std::endl;
     }else{
-        std::cout<<"Failed to connect"<<std::endl;
+        //std::cout<<"Failed to connect"<<std::endl;
     }
 
-    return "Type shit";
+    return scanResult;
 }
