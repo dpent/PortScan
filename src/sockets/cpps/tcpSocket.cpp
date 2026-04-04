@@ -96,7 +96,7 @@ std::string TCPSocket::scanPort(const char* ip, int port){
         disconnect();
         //std::cout<<"Disconnected"<<std::endl;
     }else{
-        //std::cout<<"Failed to connect"<<std::endl;
+        scanResult = "[-] Connection failed";
     }
 
     return scanResult;

@@ -32,7 +32,7 @@ std::string psSocket::analyseHTTP(std::string response){
     if(response.find("HTTP/") == 0){
         result += "[+] HTTP Detected\n";
     } else {
-        result += "[-] Not HTTP\n";
+        result += "[-] Not HTTP but responded to HTTP request\n";
         return result; // stop early if not HTTP
     }
 

@@ -96,6 +96,12 @@ Args parseArgs(int argc, char* argv[]){
     return result;
 }
 
+void printResults(const std::unordered_map<std::string, std::string>& resultsPerProbe) {
+    for (const auto& kv : resultsPerProbe) {
+        std::cout << kv.first << " - " << kv.second << std::endl;
+    }
+}
+
 int main(int argc, char* argv[]){
 
     Args args = parseArgs(argc, argv);
@@ -144,6 +150,8 @@ int main(int argc, char* argv[]){
     }
 #endif
 
+    std::unordered_map<std::string, std::string> resultsPerProbe;
+
     psSocket* socket;
     
     auto allIt = std::find(args.letters.begin(), args.letters.end(), 'b');
@@ -153,7 +161,11 @@ int main(int argc, char* argv[]){
         for(const std::string& ip : ipsToScan){
             for(int& port : portsToScan){
                 std::string result = socket->scanPort(ip.c_str(), port);
-                std::cout << ip << ":" << port << " - " << result << std::endl;
+                if(result == "Nothing on this port" || result == "[-] Connection failed"){
+                    continue;
+                }else{
+                    resultsPerProbe[ip + ":" + std::to_string(port)] = result;
+                }
             }
         }
 
@@ -163,15 +175,24 @@ int main(int argc, char* argv[]){
         
         for(const std::string& ip : ipsToScan){
             for(int& port : portsToScan){
+
+                if(resultsPerProbe.count(ip + ":" + std::to_string(port))){
+                    continue; // already have a result from TCP scan
+                }
+
                 std::string result = socket->scanPort(ip.c_str(), port);
-                std::cout << ip << ":" << port << " - " << result << std::endl;
+                if(result == "Nothing on this port"){
+                    continue;
+                }else{
+                    resultsPerProbe[ip + ":" + std::to_string(port)] = result;
+                }
             }
         }
         delete socket;
 
+        printResults(resultsPerProbe);
         return 0;
     }
-
 
     auto it = std::find(args.letters.begin(), args.letters.end(), 'u');
 
@@ -185,11 +206,16 @@ int main(int argc, char* argv[]){
 
         for(int& port : portsToScan){
             std::string result = socket->scanPort(ip.c_str(), port);
-            std::cout << ip << ":" << port << " - " << result << std::endl;
+            if(result == "Nothing on this port" || result == "[-] Connection failed"){
+                continue;
+            }else{
+                resultsPerProbe[ip + ":" + std::to_string(port)] = result;
+            }
         }
     }
 
     delete socket;
-    
+
+    printResults(resultsPerProbe);
     return 0;
 }
