@@ -50,7 +50,7 @@ char* TCPSocket::receiveBytes(){
     ssize_t bytesReceived = recv(s, buffer, 1024, 0);
     #endif
     if(bytesReceived < 0){
-        delete buffer;
+        delete[] buffer;
         return nullptr;
     }
 

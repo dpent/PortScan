@@ -25,8 +25,10 @@ bool UDPSocket::connectTo(const char* ip, int port){
 
 void UDPSocket::disconnect(){
     #ifdef _WIN32
+    shutdown(s, SD_BOTH);
     closesocket(s);
     #else
+    shutdown(s, SHUT_RDWR);
     close(s);
     #endif
 }
@@ -51,7 +53,7 @@ char* UDPSocket::receiveBytes(){
     ssize_t bytesReceived = recvfrom(s, buffer, 1024, 0, (sockaddr*)&addr, &addrLen);
     #endif
     if(bytesReceived < 0){
-        delete buffer;
+        delete[] buffer;
         return nullptr;
     }
 

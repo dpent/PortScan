@@ -1,5 +1,7 @@
 #include "sockets/headers/tcpSocket.h"
+#include "servers/headers/tcpServerSocket.h"
 #include "sockets/headers/udpSocket.h"
+#include "servers/headers/udpServerSocket.h"
 #include <iostream>
 
 int main(){
@@ -14,13 +16,18 @@ int main(){
         std::cout<<"WSAStartup successful" << std::endl;
     }
 #endif
-
     TCPSocket socket;
-    if(socket.connectTo("127.0.0.1", 27017)){
-        std::cout<<"Connected to port 27017"<<std::endl;
+    if(socket.connectTo("127.0.0.1", 8080)){
+        std::cout<<"Connected to port 8080"<<std::endl;
         
-        socket.sendBytes((char*)"Hello world", 11);
+        socket.sendBytes((char*)"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n", 36);
         std::cout<<"Sent data"<<std::endl;
+
+        char* response = socket.receiveBytes();
+        if(response){
+            std::cout<<"Received response: "<<response<<std::endl;
+            delete[] response;
+        }
 
         socket.disconnect();
         std::cout<<"Disconnected"<<std::endl;
@@ -29,11 +36,17 @@ int main(){
     }
 
     UDPSocket udpSocket;
-        if(udpSocket.connectTo("127.0.0.54", 10010)){
-        std::cout<<"Connected to port 53"<<std::endl;
+    if(udpSocket.connectTo("127.0.0.1", 8080)){
+        std::cout<<"Connected to port 8080"<<std::endl;
 
-        udpSocket.sendBytes((char*)"Hello world", 11);
+        udpSocket.sendBytes((char*)"GET / HTTP/1.1\r\nHost: localhost\r\n\r\n", 36);
         std::cout<<"Sent data"<<std::endl;
+
+        char* response = udpSocket.receiveBytes();
+        if(response){
+            std::cout<<"Received response: "<<response<<std::endl;
+            delete[] response;
+        }
 
         udpSocket.disconnect();
         std::cout<<"Disconnected"<<std::endl;
