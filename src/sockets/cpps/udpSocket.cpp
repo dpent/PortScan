@@ -33,14 +33,23 @@ void UDPSocket::disconnect(){
 
 bool UDPSocket::sendBytes(char* buffer, int length){
 
+    #ifdef _WIN32
+    int bytesSent = sendto(s, buffer, length, 0, (sockaddr*)&addr, sizeof(addr));
+    #else
     ssize_t bytesSent = sendto(s, buffer, length, 0, (sockaddr*)&addr, sizeof(addr));
+    #endif
     return bytesSent == length;
 }
 
 char* UDPSocket::receiveBytes(){
     char* buffer = new char[1024];
     socklen_t addrLen = sizeof(addr);
+    
+    #ifdef _WIN32
+    int bytesReceived = recvfrom(s, buffer, 1024, 0, (sockaddr*)&addr, &addrLen);
+    #else   
     ssize_t bytesReceived = recvfrom(s, buffer, 1024, 0, (sockaddr*)&addr, &addrLen);
+    #endif
     if(bytesReceived < 0){
         delete buffer;
         return nullptr;

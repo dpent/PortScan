@@ -34,13 +34,21 @@ void TCPSocket::disconnect(){
 
 bool TCPSocket::sendBytes(char* buffer, int length){
 
+    #ifdef _WIN32
+    int bytesSent = send(s, buffer, length, 0);
+    #else
     ssize_t bytesSent = send(s, buffer, length, 0);
+    #endif
     return bytesSent == length;
 }
 
 char* TCPSocket::receiveBytes(){
     char* buffer = new char[1024];
+    #ifdef _WIN32
+    int bytesReceived = recv(s, buffer, 1024, 0);
+    #else
     ssize_t bytesReceived = recv(s, buffer, 1024, 0);
+    #endif
     if(bytesReceived < 0){
         delete buffer;
         return nullptr;

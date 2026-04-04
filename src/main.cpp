@@ -29,7 +29,7 @@ int main(){
     }
 
     UDPSocket udpSocket;
-        if(udpSocket.connectTo("127.0.0.54", 53)){
+        if(udpSocket.connectTo("127.0.0.54", 10010)){
         std::cout<<"Connected to port 53"<<std::endl;
 
         udpSocket.sendBytes((char*)"Hello world", 11);
