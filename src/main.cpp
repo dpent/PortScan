@@ -18,6 +18,10 @@ int main(){
     TCPSocket socket;
     if(socket.connectTo("127.0.0.1", 27017)){
         std::cout<<"Connected to port 27017"<<std::endl;
+        
+        socket.sendBytes((char*)"Hello world", 11);
+        std::cout<<"Sent data"<<std::endl;
+
         socket.disconnect();
         std::cout<<"Disconnected"<<std::endl;
     }else{
@@ -25,8 +29,12 @@ int main(){
     }
 
     UDPSocket udpSocket;
-        if(udpSocket.connectTo("127.0.0.1", 57621)){
-        std::cout<<"Connected to port 57621"<<std::endl;
+        if(udpSocket.connectTo("127.0.0.54", 53)){
+        std::cout<<"Connected to port 53"<<std::endl;
+
+        udpSocket.sendBytes((char*)"Hello world", 11);
+        std::cout<<"Sent data"<<std::endl;
+
         udpSocket.disconnect();
         std::cout<<"Disconnected"<<std::endl;
     }else{

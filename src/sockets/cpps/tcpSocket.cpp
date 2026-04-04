@@ -9,7 +9,10 @@ bool TCPSocket::connectTo(const char* ip, int port){
     s = socket(AF_INET, SOCK_STREAM, 0);
     if (s < 0) return false;
 
-    sockaddr_in addr{};
+    this->ip = (char*)ip;
+    this->port = port;
+
+    addr = {};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     
@@ -27,4 +30,21 @@ void TCPSocket::disconnect(){
     #else
     close(s);
     #endif
+}
+
+bool TCPSocket::sendBytes(char* buffer, int length){
+
+    ssize_t bytesSent = send(s, buffer, length, 0);
+    return bytesSent == length;
+}
+
+char* TCPSocket::receiveBytes(){
+    char* buffer = new char[1024];
+    ssize_t bytesReceived = recv(s, buffer, 1024, 0);
+    if(bytesReceived < 0){
+        delete buffer;
+        return nullptr;
+    }
+
+    return buffer;
 }

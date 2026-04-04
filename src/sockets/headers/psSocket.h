@@ -19,10 +19,17 @@ class psSocket{ // Base socket class. Is the OS agnostic interface.
         #else
             int s;
         #endif
+
+        char* ip;
+        int port;
+        sockaddr_in addr;
+
     public:
 
         psSocket();
         virtual bool connectTo(const char* ip, int port);
         virtual void disconnect();
+        virtual bool sendBytes(char* buffer, int length);
+        virtual char* receiveBytes();
     
 };

@@ -8,7 +8,10 @@ bool UDPSocket::connectTo(const char* ip, int port){
     s = socket(AF_INET, SOCK_DGRAM, 0);
     if (s < 0) return false;
 
-    sockaddr_in addr{};
+    this->ip = (char*)ip;
+    this->port = port;
+
+    addr = {};
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     
@@ -26,4 +29,22 @@ void UDPSocket::disconnect(){
     #else
     close(s);
     #endif
+}
+
+bool UDPSocket::sendBytes(char* buffer, int length){
+
+    ssize_t bytesSent = sendto(s, buffer, length, 0, (sockaddr*)&addr, sizeof(addr));
+    return bytesSent == length;
+}
+
+char* UDPSocket::receiveBytes(){
+    char* buffer = new char[1024];
+    socklen_t addrLen = sizeof(addr);
+    ssize_t bytesReceived = recvfrom(s, buffer, 1024, 0, (sockaddr*)&addr, &addrLen);
+    if(bytesReceived < 0){
+        delete buffer;
+        return nullptr;
+    }
+
+    return buffer;
 }
