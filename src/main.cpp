@@ -102,20 +102,27 @@ void printResults(const std::unordered_map<std::string, std::string>& resultsPer
     }
 }
 
+void printHelpMessage(){
+    std::cout<<"Usage: portscan [options]\n"
+    "Options:\n"
+        "-h                    Show this help message\n"
+        "-v                    Verbose output (show all results)\n"
+        "-b                    Scan both TCP and UDP (default is TCP only)\n"
+        "-u                    Scan UDP instead of TCP\n"
+        "--ip <IP_PATTERN>     IP address or pattern to scan (e.g. 192.168.1.*, 127.0-10.0-24.*)\n"
+        "--ports <PORTS>       Comma-separated list of ports/ranges (e.g. 80,443,1000-2000). Default is 0-1024\n"
+    <<std::endl;
+}
+
 int main(int argc, char* argv[]){
 
     Args args = parseArgs(argc, argv);
 
-    /*std::cout << "Letters: ";
-    for (char c : args.letters) std::cout << c << " ";
-    std::cout << std::endl;
-
-    std::cout << "Words:\n";
-    for (auto& kv : args.words) {
-        std::cout << kv.first;
-        if (!kv.second.empty()) std::cout << " = " << kv.second;
-            std::cout << std::endl;
-    }*/
+    auto helpIt = std::find(args.letters.begin(), args.letters.end(), 'h');
+    if(helpIt != args.letters.end()){
+        printHelpMessage();
+        return 0;
+    }
 
     std::string ip = args.words.count("ip") ? args.words["ip"] : "";
     if(ip.empty()){
