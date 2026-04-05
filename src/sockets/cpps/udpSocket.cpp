@@ -100,7 +100,7 @@ std::string UDPSocket::scanPort(const char* ip, int port){
 
     if(connectTo(ip, port)){
 
-        scanResult = "[-] No response (open|filtered)";
+        scanResult = "[-] No response (open|filtered|closed)";
 
         //Send mock DNS query
         std::vector<uint8_t> query = psSocket::buildDNSQuery("google.com");
@@ -122,7 +122,7 @@ std::string UDPSocket::scanPort(const char* ip, int port){
 
     if(connectTo(ip, port)){
 
-        scanResult = "[-] No response (open|filtered)";
+        scanResult = "[-] No response (open|filtered|closed)";
         //std::cout<<"Connected to port "<<port<<std::endl;
         
         //Send mock SNMP query

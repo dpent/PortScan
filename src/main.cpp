@@ -153,7 +153,7 @@ int main(int argc, char* argv[]){
     std::unordered_map<std::string, std::string> resultsPerProbe;
 
     psSocket* socket;
-    
+    auto verboseIt = std::find(args.letters.begin(), args.letters.end(), 'v');
     auto allIt = std::find(args.letters.begin(), args.letters.end(), 'b');
     if(allIt != args.letters.end()){
         socket = new TCPSocket();
@@ -161,7 +161,7 @@ int main(int argc, char* argv[]){
         for(const std::string& ip : ipsToScan){
             for(int& port : portsToScan){
                 std::string result = socket->scanPort(ip.c_str(), port);
-                if(result == "Nothing on this port" || result == "[-] Connection failed"){
+                if(result == "Nothing on this port" || (verboseIt == args.letters.end() && result == "[-] Connection failed")){
                     continue;
                 }else{
                     resultsPerProbe[ip + ":" + std::to_string(port)] = result;
@@ -181,7 +181,7 @@ int main(int argc, char* argv[]){
                 }
 
                 std::string result = socket->scanPort(ip.c_str(), port);
-                if(result == "Nothing on this port"){
+                if(result == "Nothing on this port" || (verboseIt == args.letters.end() && result == "[-] No response (open|filtered|closed)")){
                     continue;
                 }else{
                     resultsPerProbe[ip + ":" + std::to_string(port)] = result;
@@ -206,7 +206,8 @@ int main(int argc, char* argv[]){
 
         for(int& port : portsToScan){
             std::string result = socket->scanPort(ip.c_str(), port);
-            if(result == "Nothing on this port" || result == "[-] Connection failed"){
+            if(result == "Nothing on this port" || (verboseIt == args.letters.end() && result == "[-] Connection failed")
+               || (verboseIt == args.letters.end() && result == "[-] No response (open|filtered|closed)")){
                 continue;
             }else{
                 resultsPerProbe[ip + ":" + std::to_string(port)] = result;

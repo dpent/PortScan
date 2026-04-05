@@ -2,6 +2,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -40,10 +41,12 @@ class psSocket{ // Base socket class. Is the OS agnostic interface.
 
         psSocket();
         static std::string analyseHTTP(std::string response);
+        static std::string analyseHTTPS(std::string response);
         static std::string analyseBanner(std::string response);
         static std::vector<uint8_t> buildDNSQuery(std::string domain);
         static std::vector<uint8_t> buildNTPQuery();
         static std::vector<uint8_t> buildSNMPQuery();
+        static std::vector<uint8_t> buildTLSClientHello();
         virtual bool connectTo(const char* ip, int port);
         virtual void disconnect();
         virtual bool sendBytes(char* buffer, int length);

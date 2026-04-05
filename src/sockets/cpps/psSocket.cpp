@@ -82,31 +82,47 @@ std::string psSocket::analyseHTTP(std::string response){
 
 std::string psSocket::analyseBanner(std::string response){
     if(response.empty())
-        return "[-] No banner";
+        return "[-] No banner received";
 
-    if(response.find("SSH-") == 0){
-        return "[+] SSH";
+    if(response.rfind("SSH-", 0) == 0){
+        size_t end = response.find('\n');
+        std::string versionInfo = response.substr(0, end == std::string::npos ? response.size() : end);
+        versionInfo.erase(versionInfo.find_last_not_of("\r\n") + 1);
+
+        std::string implementation = "Unknown SSH implementation";
+
+        size_t dashPos = versionInfo.find('-', 4);
+        if(dashPos != std::string::npos){
+            implementation = versionInfo.substr(dashPos + 1);
+        }
+        versionInfo = versionInfo.substr(0, dashPos);
+
+        return "[+] SSH detected | Version: " + versionInfo + " | Implementation: " + implementation;
     }
 
-    if(response.find("HTTP/") == 0){
-        return psSocket::analyseHTTP(response);
+    // HTTP
+    if(response.rfind("HTTP/", 0) == 0){
+        std::string firstLine = response.substr(0, response.find("\n"));
+        return "[+] HTTP detected | Status line: " + firstLine +
+               " | " + psSocket::analyseHTTP(response);
     }
 
-    if(response.find("220") == 0){
+    if(response.rfind("220", 0) == 0){
+        std::string firstLine = response.substr(0, response.find("\n"));
 
         if(response.find("SMTP") != std::string::npos ||
            response.find("ESMTP") != std::string::npos){
-            return "[+] SMTP";
+            return "[+] SMTP detected | Banner: " + firstLine;
         }
 
         if(response.find("FTP") != std::string::npos){
-            return "[+] FTP";
+            return "[+] FTP detected | Banner: " + firstLine;
         }
 
-        return "[?] 220 (FTP/SMTP unknown)";
+        return "[?] 220 response detected | Possible FTP/SMTP | Banner: " + firstLine;
     }
 
-    return "[-] Unknown protocol";
+    return "[-] Unknown protocol | Raw banner: " + response.substr(0, response.find("\n"));
 }
 
 std::vector<uint8_t> psSocket::buildDNSQuery(std::string domain){
@@ -187,4 +203,88 @@ std::vector<uint8_t> psSocket::buildSNMPQuery() {
         0x05, 0x00              // Null value
     };
     return packet;
+}
+
+std::vector<uint8_t> psSocket::buildTLSClientHello() {
+    std::vector<uint8_t> clientHello;
+
+    // --- TLS Record Header ---
+    clientHello.push_back(0x16); // Handshake
+    clientHello.push_back(0x03); // TLS major
+    clientHello.push_back(0x01); // TLS minor
+    clientHello.push_back(0x00); // Length high byte (fill later)
+    clientHello.push_back(0x2f); // Length low byte (47 bytes = 4 + 43)
+
+    // --- Handshake Header ---
+    clientHello.push_back(0x01); // ClientHello
+    clientHello.push_back(0x00);
+    clientHello.push_back(0x00);
+    clientHello.push_back(0x2b); // 43 bytes body
+
+    // --- ClientHello Body ---
+    clientHello.push_back(0x03); // TLS version 1.2
+    clientHello.push_back(0x03);
+
+    // Random 32 bytes
+    for(int i = 0; i < 32; ++i) clientHello.push_back(0x00);
+
+    // Session ID length
+    clientHello.push_back(0x00);
+
+    // Cipher suites length (2 bytes) + cipher suite
+    clientHello.push_back(0x00);
+    clientHello.push_back(0x02);
+    clientHello.push_back(0x00);
+    clientHello.push_back(0x2f);
+
+    // Compression methods length + method
+    clientHello.push_back(0x01);
+    clientHello.push_back(0x00);
+
+    // Extensions length = 0
+    clientHello.push_back(0x00);
+    clientHello.push_back(0x00);
+
+    return clientHello;
+}
+
+std::string psSocket::analyseHTTPS(std::string response) {
+    std::string result;
+
+    // TLS response first byte = 0x16 (Handshake) or 0x15 (Alert)
+    unsigned char b0 = response[0];
+    unsigned char b1 = response[1];
+
+    if((b0 == 0x16 || b0 == 0x15) && b1 == 0x03) {
+        result += "[+] HTTPS Detected (TLS handshake/alert response)\n";
+    } else {
+        result += "[-] Not HTTPS (unexpected response)\n";
+        return result; // stop early if not HTTPS
+    }
+
+    // Optionally: show raw TLS version detected from server
+    // TLS version is bytes 1-2 (major, minor)
+    std::string tlsVersion;
+    switch(b1) {
+        case 0x00: tlsVersion = "SSL 3.0"; break;
+        case 0x01: tlsVersion = "TLS 1.0"; break;
+        case 0x02: tlsVersion = "TLS 1.1"; break;
+        case 0x03: tlsVersion = "TLS 1.2"; break;
+        case 0x04: tlsVersion = "TLS 1.3"; break;
+        default: tlsVersion = "Unknown TLS version"; break;
+    }
+
+    result += "[*] TLS version (from handshake): " + tlsVersion + "\n";
+
+    // Optionally: dump first few bytes of the handshake for debugging
+    size_t dumpLen = std::min((size_t)16, response.size());
+    result += "[*] Response bytes (first " + std::to_string(dumpLen) + "): ";
+    for(size_t i = 0; i < dumpLen; ++i) {
+        char buf[4];
+        snprintf(buf, sizeof(buf), "%02X ", (unsigned char)response[i]);
+        result += buf;
+    }
+    result += "\n";
+
+    return result;
 }

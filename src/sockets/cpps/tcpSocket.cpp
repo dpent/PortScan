@@ -82,12 +82,25 @@ std::string TCPSocket::scanPort(const char* ip, int port){
         }
 
         //std::cout<<"Connected to port "<<port<<std::endl;
+
+        std::vector<uint8_t> tlsClientHello = psSocket::buildTLSClientHello();
+        sendBytes((char*)tlsClientHello.data(), tlsClientHello.size());
+
+        Response response = receiveBytes();
+        if(response.data){
+            scanResult = psSocket::analyseHTTPS(std::string(response.data, response.length));
+            delete[] response.data;
+            if(scanResult != "[-] Not HTTPS (unexpected response)\n"){
+                return scanResult;
+            }   
+
+        }
         
         std::string request = "GET / HTTP/1.1\r\nHost: " + std::string(ip) + "\r\n\r\n";
         sendBytes((char*)request.c_str(), request.length());
         //std::cout<<"Sent data"<<std::endl;
 
-        Response response = receiveBytes();
+        response = receiveBytes();
         if(response.data){
             scanResult = psSocket::analyseHTTP(std::string(response.data));
             delete[] response.data;
