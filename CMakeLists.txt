@@ -9,13 +9,14 @@ option(USE_GUI "Build GUI version" OFF)
 file(GLOB_RECURSE SOCKETS "src/sockets/**/*.cpp")
 file(GLOB_RECURSE GUI_SOURCES "src/gui/cpps/*.cpp")
 file(GLOB_RECURSE IMGUI "src/gui/imgui/*.cpp")
+file(GLOB HELPER "src/helper.cpp")
 
 if(USE_GUI)
     set(MAIN_FILE src/gui/main.cpp)
-    add_executable(portscan ${MAIN_FILE} ${SOCKETS} ${GUI_SOURCES} ${IMGUI})
+    add_executable(portscan ${MAIN_FILE} ${SOCKETS} ${GUI_SOURCES} ${IMGUI} ${HELPER})
 else()
     set(MAIN_FILE src/cli/main.cpp)
-    add_executable(portscan ${MAIN_FILE} ${SOCKETS})
+    add_executable(portscan ${MAIN_FILE} ${SOCKETS} ${HELPER})
 endif()
 
 

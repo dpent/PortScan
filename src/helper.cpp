@@ -1,20 +1,6 @@
-#include <iostream>
-#include <unordered_map>
-#include <vector>
-#include <sstream>
-#include <algorithm>
-#include "sockets/headers/tcpSocket.h"
-#include "servers/headers/tcpServerSocket.h"
-#include "sockets/headers/udpSocket.h"
-#include "servers/headers/udpServerSocket.h"
+#include "helper.h"
 
-
-struct Args {
-    std::vector<char> letters;                  // single-letter flags
-    std::unordered_map<std::string, std::string> words; // --word arguments
-};
-
-std::vector<int> parseOctet(const std::string& part) {
+std::vector<int> Helper::parseOctet(const std::string& part) {
     std::vector<int> result;
 
     if (part == "*") {
@@ -37,25 +23,25 @@ std::vector<int> parseOctet(const std::string& part) {
 }
 
 // Recursive function to generate all combinations
-void generateIPs(const std::vector<std::vector<int>>& octets, std::vector<std::string>& result, std::string current = "", size_t index = 0) {
+void Helper::generateIPs(const std::vector<std::vector<int>>& octets, std::vector<std::string>& result, std::string current, size_t index) {
     if (index == octets.size()) {
         result.push_back(current.substr(1)); // remove leading '.'
         return;
     }
 
     for (int val : octets[index]) {
-        generateIPs(octets, result, current + "." + std::to_string(val), index + 1);
+        Helper::generateIPs(octets, result, current + "." + std::to_string(val), index + 1);
     }
 }
 
-std::vector<std::string> expandIP(const std::string& ipPattern) {
+std::vector<std::string> Helper::expandIP(const std::string& ipPattern) {
     std::vector<std::string> result;
     std::vector<std::vector<int>> octets;
     std::stringstream ss(ipPattern);
     std::string part;
 
     while (std::getline(ss, part, '.')) {
-        octets.push_back(parseOctet(part));
+        octets.push_back(Helper::parseOctet(part));
     }
 
     if (octets.size() != 4) {
@@ -68,7 +54,7 @@ std::vector<std::string> expandIP(const std::string& ipPattern) {
 }
 
 
-Args parseArgs(int argc, char* argv[]){
+Args Helper::parseArgs(int argc, char* argv[]){
 
     Args result;
 
@@ -96,13 +82,13 @@ Args parseArgs(int argc, char* argv[]){
     return result;
 }
 
-void printResults(const std::unordered_map<std::string, std::string>& resultsPerProbe) {
+void Helper::printResults(const std::unordered_map<std::string, std::string>& resultsPerProbe) {
     for (const auto& kv : resultsPerProbe) {
         std::cout << kv.first << " - " << kv.second << std::endl;
     }
 }
 
-void printHelpMessage(){
+void Helper::printHelpMessage(){
     std::cout<<"Usage: portscan [options]\n"
     "Options:\n"
         "-h                    Show this help message\n"
@@ -114,8 +100,11 @@ void printHelpMessage(){
     <<std::endl;
 }
 
-std::unordered_map<std::string, std::string> portscan(int argc, char* argv[]){
-    Args args = parseArgs(argc, argv);
+std::unordered_map<std::string, std::string> Helper::portscan(int argc, char* argv[]){
+    
+    Args args = Helper::parseArgs(argc, argv);
+
+    //std::cout<<args.toString()<<std::endl;
 
     auto helpIt = std::find(args.letters.begin(), args.letters.end(), 'h');
     if(helpIt != args.letters.end()){

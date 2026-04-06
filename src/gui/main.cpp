@@ -1,4 +1,4 @@
-#include "../helper.cpp"
+#include "../helper.h"
 #include "headers/engine.h"
 
 int main() {

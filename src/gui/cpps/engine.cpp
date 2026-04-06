@@ -1,6 +1,11 @@
 #include "../headers/engine.h"
+#include <sstream>
+#include "../../helper.h"
 
 GLFWwindow* Engine::window = nullptr;
+std::vector<Scan*> Engine::history = std::vector<Scan*>();
+char Engine::currentCommand[256] = "\0";
+int Engine::selectedScan = -1;
 
 Engine::Engine(){
 }
@@ -41,7 +46,10 @@ void Engine::mainLoop(){
         ImGui::NewFrame();
 
         ImGui::DockSpaceOverViewport();
-        ImGui::ShowDemoWindow();
+        WindowManager::createCommandWindow();
+        WindowManager::createPastScansWindow();
+        WindowManager::createHelpWindow();
+        WindowManager::createOutputWindow();
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -73,4 +81,30 @@ void Engine::initIMGUI(){
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(Engine::window, true);          // Second param install_callback=true will install GLFW callbacks and chain to existing ones.
     ImGui_ImplOpenGL3_Init();
+}
+
+void Engine::executeCommand(char* command){
+    std::string commandStr(command);
+
+    Scan* newScan = new Scan(commandStr);
+    Engine::history.push_back(newScan);
+
+    std::istringstream iss(commandStr);
+    std::vector<std::string> tokens;
+    std::string token;
+    tokens.push_back("portscan");
+    while (iss >> token) {
+        tokens.push_back(token);
+    }
+
+    // Prepare argc and argv
+    int argc = static_cast<int>(tokens.size());
+    std::vector<char*> argv;
+    for (auto& s : tokens) {
+        argv.push_back(const_cast<char*>(s.c_str()));
+    }
+
+    newScan->rawResults = Helper::portscan(argc, argv.data());
+    newScan->formatOutputString();
+    Engine::selectedScan = Engine::history.size() - 1;
 }

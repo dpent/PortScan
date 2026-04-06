@@ -1,12 +1,12 @@
-#include "../helper.cpp"
+#include "../helper.h"
 
 int main(int argc, char* argv[]){
 
-    std::unordered_map<std::string, std::string> results = portscan(argc, argv);
+    std::unordered_map<std::string, std::string> results = Helper::portscan(argc, argv);
 
     for(const auto& [key, value] : results){
         if(key == "Help"){
-            printHelpMessage();
+            Helper::printHelpMessage();
             return 0;
         }
 
@@ -16,7 +16,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    printResults(results);
+    Helper::printResults(results);
 
     return 0;
 }
