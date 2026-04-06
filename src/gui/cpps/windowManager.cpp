@@ -22,9 +22,29 @@ void WindowManager::createCommandWindow() {
         sizeof(Engine::currentCommand),
         ImGuiInputTextFlags_EnterReturnsTrue
     )){
-        Engine::executeCommand(Engine::currentCommand);
+        Engine::enqueueCommand(Engine::currentCommand);
         Engine::currentCommand[0] = '\0';
     }
+
+    Scan::activeScansMutex.lock();
+    if(Scan::numActiveScans!=0){
+
+        Engine::spinnerTimer += ImGui::GetIO().DeltaTime;
+
+        // Only update spinner when enough time has passed
+        if (Engine::spinnerTimer >= Engine::spinnerInterval) {
+            Engine::spinnerIndex = (Engine::spinnerIndex + 1) % 4;
+            Engine::spinnerTimer = 0.0f;
+        }
+
+        std::string str = "There are currently " 
+                + std::to_string(Scan::numActiveScans) 
+                + " scans queued or running " 
+                + std::string(1, Engine::spinner[Engine::spinnerIndex]);
+
+        ImGui::Text("%s",str.c_str());
+    }
+    Scan::activeScansMutex.unlock();
 
     ImGui::End();
 }
@@ -36,15 +56,17 @@ void WindowManager::createPastScansWindow(){
 
     if (ImGui::BeginListBox("##list", listBoxSize))
     {
+        Engine::historyMutex.lock();
         for (int i = Engine::history.size() - 1; i >= 0; i--)
         {
             const bool is_selected = (Engine::selectedScan == i);
-            if (ImGui::Selectable(Engine::history[i]->command.c_str(), is_selected))
+            if (ImGui::Selectable(Engine::history[i]->publicName.c_str(), is_selected))
                 Engine::selectedScan = i;
 
             if (is_selected)
                 ImGui::SetItemDefaultFocus();
         }
+        Engine::historyMutex.unlock();
         ImGui::EndListBox();
     }
     ImGui::End();
@@ -71,8 +93,10 @@ void WindowManager::createOutputWindow(){
 
         ImGui::TextWrapped("Scan results will be displayed here.");
     }else{
+        Engine::historyMutex.lock();
         Scan* selected = Engine::history[Engine::selectedScan];
         ImGui::TextWrapped("%s", selected->outputString.c_str());
+        Engine::historyMutex.unlock();
     }
     ImGui::End();
 }

@@ -1,6 +1,12 @@
 #include "../headers/scan.h"
 
+ulong Scan::id = 0;
+uint Scan::numActiveScans = 0;
+std::mutex Scan::activeScansMutex;
+
 void Scan::formatOutputString(){
+
+    outputString = "";
 
     for(const auto& [key, value] : rawResults){
         if(key == "Help"){
@@ -23,6 +29,8 @@ void Scan::formatOutputString(){
 }
 
 Scan::Scan(std::string command){
+    id++;
     this->command = command;
     outputString = "";
+    publicName = "Scanning...";
 }
