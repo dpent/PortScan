@@ -1,12 +1,13 @@
-#include "sockets/headers/tcpSocket.h"
-#include "servers/headers/tcpServerSocket.h"
-#include "sockets/headers/udpSocket.h"
-#include "servers/headers/udpServerSocket.h"
 #include <iostream>
 #include <unordered_map>
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include "sockets/headers/tcpSocket.h"
+#include "servers/headers/tcpServerSocket.h"
+#include "sockets/headers/udpSocket.h"
+#include "servers/headers/udpServerSocket.h"
+
 
 struct Args {
     std::vector<char> letters;                  // single-letter flags
@@ -36,8 +37,7 @@ std::vector<int> parseOctet(const std::string& part) {
 }
 
 // Recursive function to generate all combinations
-void generateIPs(const std::vector<std::vector<int>>& octets, std::vector<std::string>& result, 
-                 std::string current = "", size_t index = 0) {
+void generateIPs(const std::vector<std::vector<int>>& octets, std::vector<std::string>& result, std::string current = "", size_t index = 0) {
     if (index == octets.size()) {
         result.push_back(current.substr(1)); // remove leading '.'
         return;
@@ -114,20 +114,21 @@ void printHelpMessage(){
     <<std::endl;
 }
 
-int main(int argc, char* argv[]){
-
+std::unordered_map<std::string, std::string> portscan(int argc, char* argv[]){
     Args args = parseArgs(argc, argv);
 
     auto helpIt = std::find(args.letters.begin(), args.letters.end(), 'h');
     if(helpIt != args.letters.end()){
-        printHelpMessage();
-        return 0;
+        std::unordered_map<std::string, std::string> result;
+        result["Help"] = "True";
+        return result;
     }
 
     std::string ip = args.words.count("ip") ? args.words["ip"] : "";
     if(ip.empty()){
-        std::cout<<"No IP provided. Use --ip <IPV4_ADDRESS>"<<std::endl;
-        return 1;
+        std::unordered_map<std::string, std::string> result;
+        result["Error"] = "No IP provided. Use --ip <IPV4_ADDRESS>";
+        return result;
     }
     std::vector<std::string> ipsToScan = expandIP(ip);
 
@@ -196,9 +197,7 @@ int main(int argc, char* argv[]){
             }
         }
         delete socket;
-
-        printResults(resultsPerProbe);
-        return 0;
+        return resultsPerProbe;
     }
 
     auto it = std::find(args.letters.begin(), args.letters.end(), 'u');
@@ -224,6 +223,5 @@ int main(int argc, char* argv[]){
 
     delete socket;
 
-    printResults(resultsPerProbe);
-    return 0;
+    return resultsPerProbe;
 }
