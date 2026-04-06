@@ -5,3 +5,6 @@
 #VS directories
 /.vs
 /.vscode
+
+#Windows dumbass files
+**/*Zone.Identifier
