@@ -151,7 +151,7 @@ std::unordered_map<std::string, std::string> portscan(int argc, char* argv[]){
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         std::cout << "WSAStartup failed" << std::endl;
-        return false;
+        return std::unordered_map<std::string, std::string>{{"Error", "WSAStartup failed"}};
     }
     else {
         std::cout<<"WSAStartup successful" << std::endl;

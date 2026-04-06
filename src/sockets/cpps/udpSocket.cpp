@@ -82,7 +82,7 @@ std::string UDPSocket::scanPort(const char* ip, int port){
 
         //Send mock NTP query
         std::vector<uint8_t> query = psSocket::buildNTPQuery();
-        sendBytes((char*)query.data(), query.size());
+        sendBytes((char*)query.data(), static_cast<int>(query.size()));
     
         Response response = receiveBytes();
         if(response.data && response.length >= 48){
@@ -104,7 +104,7 @@ std::string UDPSocket::scanPort(const char* ip, int port){
 
         //Send mock DNS query
         std::vector<uint8_t> query = psSocket::buildDNSQuery("google.com");
-        sendBytes((char*)query.data(), query.size());
+        sendBytes((char*)query.data(), static_cast<int>(query.size()));
     
         Response response = receiveBytes();
         if(response.data && response.length >= 48){
@@ -127,7 +127,7 @@ std::string UDPSocket::scanPort(const char* ip, int port){
         
         //Send mock SNMP query
         std::vector<uint8_t> query = psSocket::buildSNMPQuery();
-        sendBytes((char*)query.data(), query.size());
+        sendBytes((char*)query.data(), static_cast<int>(query.size()));
         //std::cout<<"Sent data"<<std::endl;
 
         Response response = receiveBytes();

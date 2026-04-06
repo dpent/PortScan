@@ -150,7 +150,7 @@ std::vector<uint8_t> psSocket::buildDNSQuery(std::string domain){
     size_t end;
 
     while((end = domain.find('.', start)) != std::string::npos){
-        uint8_t len = end - start;
+        uint8_t len = static_cast<uint8_t>(end - start);
         packet.push_back(len);
         for(size_t i = start; i < end; i++)
             packet.push_back(domain[i]);
@@ -159,7 +159,7 @@ std::vector<uint8_t> psSocket::buildDNSQuery(std::string domain){
     }
 
     // last part
-    uint8_t len = domain.size() - start;
+    uint8_t len = static_cast<uint8_t>(domain.size() - start);
     packet.push_back(len);
     for(size_t i = start; i < domain.size(); i++)
         packet.push_back(domain[i]);

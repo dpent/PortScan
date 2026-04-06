@@ -84,7 +84,7 @@ std::string TCPSocket::scanPort(const char* ip, int port){
         //std::cout<<"Connected to port "<<port<<std::endl;
 
         std::vector<uint8_t> tlsClientHello = psSocket::buildTLSClientHello();
-        sendBytes((char*)tlsClientHello.data(), tlsClientHello.size());
+        sendBytes((char*)tlsClientHello.data(), static_cast<int>(tlsClientHello.size()));
 
         Response response = receiveBytes();
         if(response.data){
@@ -97,7 +97,7 @@ std::string TCPSocket::scanPort(const char* ip, int port){
         }
         
         std::string request = "GET / HTTP/1.1\r\nHost: " + std::string(ip) + "\r\n\r\n";
-        sendBytes((char*)request.c_str(), request.length());
+        sendBytes((char*)request.c_str(), static_cast<int>(request.length()));
         //std::cout<<"Sent data"<<std::endl;
 
         response = receiveBytes();
