@@ -7,14 +7,17 @@ set(CMAKE_CXX_STANDARD 20)
 option(USE_GUI "Build GUI version" OFF)
 
 file(GLOB_RECURSE SOCKETS "src/sockets/**/*.cpp")
+file(GLOB_RECURSE GUI_SOURCES "src/gui/cpps/*.cpp")
+file(GLOB_RECURSE IMGUI "src/gui/imgui/*.cpp")
 
 if(USE_GUI)
     set(MAIN_FILE src/gui/main.cpp)
+    add_executable(portscan ${MAIN_FILE} ${SOCKETS} ${GUI_SOURCES} ${IMGUI})
 else()
     set(MAIN_FILE src/cli/main.cpp)
+    add_executable(portscan ${MAIN_FILE} ${SOCKETS})
 endif()
 
-add_executable(portscan ${MAIN_FILE} ${SOCKETS})
 
 target_include_directories(portscan PRIVATE src)
 
