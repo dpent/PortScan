@@ -87,7 +87,7 @@ std::string UDPSocket::scanPort(const char* ip, int port){
         Response response = receiveBytes();
         if(response.data && response.length >= 48){
     
-            scanResult = "[+] NTP Detected. Got a response to a mock NTP query.";
+            scanResult = "[+] NTP Detected. Got a response to a mock NTP query.\n";
             delete[] response.data;
             return scanResult;
         }
@@ -109,7 +109,7 @@ std::string UDPSocket::scanPort(const char* ip, int port){
         Response response = receiveBytes();
         if(response.data && response.length >= 48){
     
-            scanResult = "[+] DNS Detected. Got a response to a mock DNS query.";
+            scanResult = "[+] DNS Detected. Got a response to a mock DNS query.\n";
             delete[] response.data;
             return scanResult;
         }
@@ -133,7 +133,7 @@ std::string UDPSocket::scanPort(const char* ip, int port){
         Response response = receiveBytes();
         if(response.data && response.length > 10){
 
-            scanResult = "[+] SNMP Detected. Got a response to a mock SNMP query.";
+            scanResult = "[+] SNMP Detected. Got a response to a mock SNMP query.\n";
             delete[] response.data;
             return scanResult;
         }

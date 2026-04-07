@@ -97,7 +97,7 @@ std::string psSocket::analyseBanner(std::string response){
         }
         versionInfo = versionInfo.substr(0, dashPos);
 
-        return "[+] SSH detected | Version: " + versionInfo + " | Implementation: " + implementation;
+        return "[+] SSH detected | Version: " + versionInfo + " | Implementation: " + implementation + "\n";
     }
 
     // HTTP
@@ -112,17 +112,17 @@ std::string psSocket::analyseBanner(std::string response){
 
         if(response.find("SMTP") != std::string::npos ||
            response.find("ESMTP") != std::string::npos){
-            return "[+] SMTP detected | Banner: " + firstLine;
+            return "[+] SMTP detected | Banner: " + firstLine + "\n";
         }
 
         if(response.find("FTP") != std::string::npos){
-            return "[+] FTP detected | Banner: " + firstLine;
+            return "[+] FTP detected | Banner: " + firstLine + "\n";
         }
 
-        return "[?] 220 response detected | Possible FTP/SMTP | Banner: " + firstLine;
+        return "[?] 220 response detected | Possible FTP/SMTP | Banner: " + firstLine + "\n";
     }
 
-    return "[-] Unknown protocol | Raw banner: " + response.substr(0, response.find("\n"));
+    return "[-] Unknown protocol | Raw banner: " + response.substr(0, response.find("\n")) + "\n";
 }
 
 std::vector<uint8_t> psSocket::buildDNSQuery(std::string domain){

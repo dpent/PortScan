@@ -4,10 +4,14 @@
 #include <vector>
 #include <sstream>
 #include <algorithm>
+#include <fstream>
+#include <filesystem>
 #include "sockets/headers/tcpSocket.h"
 #include "servers/headers/tcpServerSocket.h"
 #include "sockets/headers/udpSocket.h"
 #include "servers/headers/udpServerSocket.h"
+#include "gui/headers/scan.h"
+#include <regex>
 
 struct Args {
     std::vector<char> letters;                  // single-letter flags
@@ -35,5 +39,10 @@ class Helper{
     static Args parseArgs(int argc, char* argv[]);
     static void printResults(const std::unordered_map<std::string, std::string>& resultsPerProbe);
     static void printHelpMessage();
+    static std::string getExtension(std::string& filename);
+    static bool exportResults(Scan* scan, std::string& filename);
+    static std::vector<std::string> splitByIP(std::string& input);
+    static std::string formatMD(std::string& output);
+    static std::string formatHTML(std::string& output);
     static std::unordered_map<std::string, std::string> portscan(int argc, char* argv[]);
 };

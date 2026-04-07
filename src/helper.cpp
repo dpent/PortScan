@@ -119,7 +119,7 @@ std::unordered_map<std::string, std::string> Helper::portscan(int argc, char* ar
         result["Error"] = "No IP provided. Use --ip <IPV4_ADDRESS>";
         return result;
     }
-    std::vector<std::string> ipsToScan = expandIP(ip);
+    std::vector<std::string> ipsToScan = Helper::expandIP(ip);
 
     std::vector<int> portsToScan;
     if(args.words.count("ports")){
@@ -127,13 +127,28 @@ std::unordered_map<std::string, std::string> Helper::portscan(int argc, char* ar
         std::stringstream ss(portsStr);
         std::string portPart;
         while (std::getline(ss, portPart, ',')) {
-            std::vector<int> parsedPorts = parseOctet(portPart);
+            std::vector<int> parsedPorts = Helper::parseOctet(portPart);
             portsToScan.insert(portsToScan.end(), parsedPorts.begin(), parsedPorts.end());
         }
     }else{
         for(int i = 0; i<=1024; i++){
             portsToScan.push_back(i);
         }
+    }
+
+    std::unordered_map<std::string, std::string> resultsPerProbe;
+
+    if(args.words.count("out")){
+        std::string outputFilename = args.words["out"];
+        
+        std::string extention = Helper::getExtension(outputFilename);
+        if(extention != ".html" && extention != ".md" && extention != ".txt"){
+            std::unordered_map<std::string, std::string> result;
+            result["Error"] = "Wrong file extention provided. .html, .md or .txt allowed.";
+            return result;
+        }
+
+        resultsPerProbe["Saved at"] = outputFilename;
     }
     
 #ifdef _WIN32
@@ -146,8 +161,6 @@ std::unordered_map<std::string, std::string> Helper::portscan(int argc, char* ar
         std::cout<<"WSAStartup successful" << std::endl;
     }
 #endif
-
-    std::unordered_map<std::string, std::string> resultsPerProbe;
 
     psSocket* socket;
     auto verboseIt = std::find(args.letters.begin(), args.letters.end(), 'v');
@@ -213,4 +226,148 @@ std::unordered_map<std::string, std::string> Helper::portscan(int argc, char* ar
     delete socket;
 
     return resultsPerProbe;
+}
+
+std::string Helper::getExtension(std::string& filename){
+    return std::filesystem::path(filename).extension().string();
+}
+
+bool Helper::exportResults(Scan* scan, std::string& filename){
+
+    if (!scan) return false;
+
+    std::ofstream out(filename);
+    if (!out.is_open()) return false;
+
+    std::string ext = Helper::getExtension(filename);
+    
+    if (ext == ".html") {
+        out << "<!DOCTYPE html>\n<html>\n<head>\n";
+        out << "<meta charset=\"UTF-8\">\n<title>Scan Results</title>\n</head>\n<body>\n";
+
+        out << "<h2>Command</h2>\n<p>" << scan->command << "</p>\n";
+        
+        out << "<h3>IP regex</h3>\n<p>" << scan->ipRegex << "</p>\n";
+
+        out << "<h3>Port regex</h3>\n<p>" << scan->portRegex << "</p>\n";
+
+        out << "<h2>Output</h2>\n<p>" << Helper::formatHTML(scan->outputString) << "</p>\n";
+
+        out << "<h3>IPv4s scanned</h3>\n<ul>\n";
+        for (const auto& ip : scan->ipsScanned) {
+            out << "<li>" << ip << "</li>\n";
+        }
+        out << "</ul>\n";
+
+        out << "\n<h3>Ports scanned</h3>\n<ul>\n";
+        for (const auto& port : scan->portsScanned) {
+            out << "<li>" << port << "</li>\n";
+        }
+        out << "</ul>\n";
+
+        out << "</body>\n</html>";
+    }
+    else if (ext == ".md") {
+        out << "# PortScan results\n"; 
+
+        out << "## Command\n";
+        out << scan->command << "\n";
+        
+        out << "### IP regex\n";
+        out << scan->ipRegex << "\n";
+
+        out << "### Port regex\n";
+        out << scan->portRegex << "\n";
+
+        out << "## Output\n";
+        out << Helper::formatMD(scan->outputString) << "\n\n";
+
+        out << "### IPv4s scanned\n";
+        for (const auto& ip : scan->ipsScanned) {
+            out << "- " << ip << "\n";
+        }
+
+        out << "### Ports scanned\n";
+        for (const auto& port : scan->portsScanned) {
+            out << "- " << port << "\n";
+        }
+    }
+    else {
+        out << "Output:\n";
+        out << scan->outputString << "\n\n";
+
+        out << "Command\n";
+        out << scan->command << "\n";
+        
+        out << "IP regex\n";
+        out << scan->ipRegex << "\n";
+
+        out << "Port regex\n";
+        out << scan->portRegex << "\n";
+
+        out << "IPv4s scanned:\n";
+        for (const auto& ip : scan->ipsScanned) {
+            out << "- " << ip << "\n";
+        }
+
+        out << "\nPorts scanned\n";
+        for (const auto& port : scan->portsScanned) {
+            out << "- " << port << "\n";
+        }
+    }
+
+    out.close();
+
+    return true;
+}
+
+std::vector<std::string> Helper::splitByIP(std::string& input) {
+    std::vector<std::string> entries;
+
+    // Matches IP:port at the start of an entry
+    std::regex ipPortRegex(R"((\d{1,3}\.){3}\d{1,3}:\d+)");
+
+    std::sregex_iterator iter(input.begin(), input.end(), ipPortRegex);
+    std::sregex_iterator end;
+
+    size_t lastPos = 0;
+    for (; iter != end; ++iter) {
+        size_t matchPos = iter->position();
+        if (matchPos != lastPos) {
+            // Add everything between lastPos and this match as one entry
+            std::string entry = input.substr(lastPos, matchPos - lastPos);
+            if (!entry.empty() && entry.find_first_not_of(" \n\r\t") != std::string::npos)
+                entries.push_back(entry);
+        }
+        lastPos = matchPos;
+    }
+
+    // Add the last entry from lastPos to the end
+    std::string lastEntry = input.substr(lastPos);
+    if (!lastEntry.empty() && lastEntry.find_first_not_of(" \n\r\t") != std::string::npos)
+        entries.push_back(lastEntry);
+
+    return entries;
+}
+
+std::string Helper::formatMD(std::string& output) {
+    std::ostringstream oss;
+    auto entries = Helper::splitByIP(output);
+
+    for (const auto& e : entries) {
+        oss << "- " << e << "\n";
+    }
+    return oss.str();
+}
+
+std::string Helper::formatHTML(std::string& output) {
+    std::ostringstream oss;
+    auto entries = Helper::splitByIP(output);
+
+    oss << "<ul>\n";
+    for (const auto& e : entries) {
+        oss << "  <li><code>" << e << "</code></li>\n";
+    }
+    oss << "</ul>\n";
+    return oss.str();
 }

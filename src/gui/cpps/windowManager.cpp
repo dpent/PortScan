@@ -89,14 +89,66 @@ void WindowManager::createHelpWindow(){
 
 void WindowManager::createOutputWindow(){
     ImGui::Begin("Output");
-    if(Engine::selectedScan==-1){
-
-        ImGui::TextWrapped("Scan results will be displayed here.");
-    }else{
+    Scan* selected = nullptr;
+    if(Engine::selectedScan!=-1){
         Engine::historyMutex.lock();
-        Scan* selected = Engine::history[Engine::selectedScan];
-        ImGui::TextWrapped("%s", selected->outputString.c_str());
+        selected = Engine::history[Engine::selectedScan];
         Engine::historyMutex.unlock();
     }
+
+    if(selected){
+        
+        ImGui::SeparatorText("Output");
+        ImGui::TextWrapped("%s", selected->outputString.c_str());
+
+        ImGui::SeparatorText("IPv4s scanned");
+
+        float item_min_width = 80.0f; // tweak this
+        float available_width = ImGui::GetContentRegionAvail().x;
+
+        int columns = (int)(available_width / item_min_width);
+        if (columns < 1) columns = 1;
+
+        if (ImGui::BeginTable("DynamicTable", columns, ImGuiTableFlags_SizingStretchSame))
+        {
+            for (int i = 0; i < selected->ipsScanned.size(); i++)
+            {
+                ImGui::TableNextColumn();
+                ImGui::Text("%s", selected->ipsScanned[i].c_str());
+            }
+
+            ImGui::EndTable();
+        }
+
+        ImGui::SeparatorText("Ports scanned per IPv4");
+
+        item_min_width = 40.0f; // tweak this
+
+        columns = (int)(available_width / item_min_width);
+        if (columns < 1) columns = 1;
+
+        if (ImGui::BeginTable("PortTable", columns, ImGuiTableFlags_SizingStretchSame))
+        {
+            for (int i = 0; i < selected->portsScanned.size(); i++)
+            {
+                ImGui::TableNextColumn();
+                ImGui::Text("%d", selected->portsScanned[i]);
+            }
+
+            ImGui::EndTable();
+        }
+
+    }else{
+        
+        ImGui::SeparatorText("Output");
+        ImGui::TextWrapped("Scan results will be displayed here.");
+
+        ImGui::SeparatorText("IPv4s scanned");
+        ImGui::TextWrapped("IPv4 addresses scanned will be displayed here.");
+
+        ImGui::SeparatorText("Ports scanned per IPv4");
+        ImGui::TextWrapped("Ports per address will be displayed here.");
+    }
+
     ImGui::End();
 }

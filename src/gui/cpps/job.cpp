@@ -72,7 +72,8 @@ void ScanJob::execute(){
     for (auto& s : tokens) {
         argv.push_back(const_cast<char*>(s.c_str()));
     }
-
+    
+    newScan->findIpsAndPortsScanned();
     newScan->rawResults = Helper::portscan(argc, argv.data());
     newScan->formatOutputString();
     newScan->publicName = newScan->command;
