@@ -1,8 +1,8 @@
 #include "../headers/scan.h"
 #include "../../helper.h"
 
-ulong Scan::id = 0;
-uint Scan::numActiveScans = 0;
+long Scan::id = 0;
+int Scan::numActiveScans = 0;
 std::mutex Scan::activeScansMutex;
 
 void Scan::formatOutputString(){

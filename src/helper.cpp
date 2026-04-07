@@ -157,9 +157,6 @@ std::unordered_map<std::string, std::string> Helper::portscan(int argc, char* ar
         std::cout << "WSAStartup failed" << std::endl;
         return std::unordered_map<std::string, std::string>{{"Error", "WSAStartup failed"}};
     }
-    else {
-        std::cout<<"WSAStartup successful" << std::endl;
-    }
 #endif
 
     psSocket* socket;
