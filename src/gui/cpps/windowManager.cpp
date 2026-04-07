@@ -189,10 +189,17 @@ void WindowManager::createExportWindow(){
             Engine::exporting = false;
         }
 
+        ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.80f, 0.0f, 0.0f, 0.80f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.90f, 0.0f, 0.0f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(1.0f, 0.0f, 0.0f, 1.00f));
         if(ImGui::Button("Cancel", ImVec2(buttonWidth,buttonHeight))){
             Engine::exporting = false;
         }
+        ImGui::PopStyleColor(3);
 
+        ImGui::PushStyleColor(ImGuiCol_Button,        ImVec4(0.0f, 0.30f, 0.80f, 0.80f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.0f, 0.30f, 0.90f, 1.00f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive,  ImVec4(0.0f, 0.30f, 1.0f, 1.00f));
         if(ImGui::Button("Export", ImVec2(buttonWidth, buttonHeight))){
             Engine::historyMutex.lock();
             Engine::enqueueExport(std::string(Engine::exportFilepath), Engine::exportType, Engine::history[Engine::selectedScan]);
@@ -201,6 +208,8 @@ void WindowManager::createExportWindow(){
 
             Engine::exporting = false;
         }
+        ImGui::PopStyleColor(3);
+
     }else{
         Engine::exporting = false;
         ImGui::SetCursorPosX(startX);
