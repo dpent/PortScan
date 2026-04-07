@@ -32,3 +32,17 @@ public:
     std::string toString() override;
     std::string humanReadableName() override;
 };
+
+struct ExportJob : Job {
+public:
+    std::string filepath;
+	uint8_t type;
+	Scan* scan;
+
+    ExportJob(std::string filepath, uint8_t type, Scan* scan);
+    ~ExportJob();
+
+    void execute() override;
+    std::string toString() override;
+    std::string humanReadableName() override;
+};

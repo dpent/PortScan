@@ -21,6 +21,11 @@ int Engine::spinnerIndex = 0;
 float Engine::spinnerTimer = 0.0f;
 const float Engine::spinnerInterval = 0.1f;
 
+bool Engine::firstTime = true;
+bool Engine::exporting = false;
+uint8_t Engine::exportType = 0;
+char Engine::exportFilepath[256] = "\0";
+
 Engine::Engine(){
 }
 
@@ -63,11 +68,12 @@ void Engine::mainLoop(){
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::DockSpaceOverViewport();
+        WindowManager::createDockSpaceWindow();
         WindowManager::createCommandWindow();
         WindowManager::createPastScansWindow();
         WindowManager::createHelpWindow();
         WindowManager::createOutputWindow();
+        WindowManager::createExportWindow();
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -114,6 +120,15 @@ void Engine::enqueueCommand(char* command){
     Scan::activeScansMutex.lock();
     Scan::numActiveScans++;
     Scan::activeScansMutex.unlock();
+}
+
+void Engine::enqueueExport(std::string filepath, uint8_t type, Scan* scan){
+
+    Engine::jobQueueMutex.lock();
+    ExportJob* job = new ExportJob(filepath,type,scan);
+    Engine::jobQueue.push(job);
+    Engine::jobQueueMutex.unlock();
+    Engine::jobInQueueSem.release();
 }
 
 void Engine::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {

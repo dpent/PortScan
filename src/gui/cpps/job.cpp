@@ -86,10 +86,116 @@ void ScanJob::execute(){
 
 std::string ScanJob::toString() {
 
-	return "ScanJob. No attributes.";
+	return "ScanJob. command variable is: "+command;
 }
 
 std::string ScanJob::humanReadableName() {
 
 	return "ScanJob";
+}
+
+ExportJob::ExportJob(std::string filepath, uint8_t type, Scan* scan){
+    this->filepath = filepath;
+    this->type = type;
+    this->scan = scan;
+}
+
+ExportJob::~ExportJob(){
+}
+
+void ExportJob::execute(){
+
+    if (!scan) return;
+
+    std::ofstream out(filepath);
+    if (!out.is_open()) return;
+    
+    if (type == 0) {
+        out << "<!DOCTYPE html>\n<html>\n<head>\n";
+        out << "<meta charset=\"UTF-8\">\n<title>Scan Results</title>\n</head>\n<body>\n";
+
+        out << "<h2>Command</h2>\n<p>" << scan->command << "</p>\n";
+        
+        out << "<h3>IP regex</h3>\n<p>" << scan->ipRegex << "</p>\n";
+
+        out << "<h3>Port regex</h3>\n<p>" << scan->portRegex << "</p>\n";
+
+        out << "<h2>Output</h2>\n<p>" << Helper::formatHTML(scan->outputString) << "</p>\n";
+
+        out << "<h3>IPv4s scanned</h3>\n<ul>\n";
+        for (const auto& ip : scan->ipsScanned) {
+            out << "<li>" << ip << "</li>\n";
+        }
+        out << "</ul>\n";
+
+        out << "\n<h3>Ports scanned</h3>\n<ul>\n";
+        for (const auto& port : scan->portsScanned) {
+            out << "<li>" << port << "</li>\n";
+        }
+        out << "</ul>\n";
+
+        out << "</body>\n</html>";
+    }
+    else if (type == 1) {
+        out << "# PortScan results\n"; 
+
+        out << "## Command\n";
+        out << scan->command << "\n";
+        
+        out << "### IP regex\n";
+        out << scan->ipRegex << "\n";
+
+        out << "### Port regex\n";
+        out << scan->portRegex << "\n";
+
+        out << "## Output\n";
+        out << Helper::formatMD(scan->outputString) << "\n\n";
+
+        out << "### IPv4s scanned\n";
+        for (const auto& ip : scan->ipsScanned) {
+            out << "- " << ip << "\n";
+        }
+
+        out << "### Ports scanned\n";
+        for (const auto& port : scan->portsScanned) {
+            out << "- " << port << "\n";
+        }
+    }
+    else {
+        out << "Output:\n";
+        out << scan->outputString << "\n\n";
+
+        out << "Command\n";
+        out << scan->command << "\n";
+        
+        out << "IP regex\n";
+        out << scan->ipRegex << "\n";
+
+        out << "Port regex\n";
+        out << scan->portRegex << "\n";
+
+        out << "IPv4s scanned:\n";
+        for (const auto& ip : scan->ipsScanned) {
+            out << "- " << ip << "\n";
+        }
+
+        out << "\nPorts scanned\n";
+        for (const auto& port : scan->portsScanned) {
+            out << "- " << port << "\n";
+        }
+    }
+
+    out.close();
+
+    return;
+}
+
+std::string ExportJob::toString() {
+
+	return "ExportJob. filepath variable is: "+filepath;
+}
+
+std::string ExportJob::humanReadableName() {
+
+	return "ExportJob";
 }
