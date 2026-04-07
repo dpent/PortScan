@@ -57,7 +57,7 @@ void WindowManager::createPastScansWindow(){
     if (ImGui::BeginListBox("##list", listBoxSize))
     {
         Engine::historyMutex.lock();
-        for (int i = Engine::history.size() - 1; i >= 0; i--)
+        for (int i = (int)(Engine::history.size() - 1); i >= 0; i--)
         {
             const bool is_selected = (Engine::selectedScan == i);
             if (ImGui::Selectable(Engine::history[i]->publicName.c_str(), is_selected))

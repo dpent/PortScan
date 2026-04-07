@@ -8,8 +8,8 @@
 
 class Scan{
     public:
-    static ulong id;
-    static uint numActiveScans;
+    static long id;
+    static int numActiveScans;
     static std::mutex activeScansMutex;
 
     std::string command;
