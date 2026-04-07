@@ -2,9 +2,11 @@
 
 int main(int argc, char* argv[]){
 
-    std::unordered_map<std::string, std::string> results = Helper::portscan(argc, argv);
+    Scan scan = Scan(Helper::argvToString(argc,argv));
+    scan.findIpsAndPortsScanned();
+    scan.rawResults = Helper::portscan(argc, argv);
 
-    for(const auto& [key, value] : results){
+    for(const auto& [key, value] : scan.rawResults){
         if(key == "Help"){
             Helper::printHelpMessage();
             return 0;
@@ -16,7 +18,7 @@ int main(int argc, char* argv[]){
         }
     }
 
-    Helper::printResults(results);
+    Helper::printResults(scan);
 
     return 0;
 }

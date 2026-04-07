@@ -82,10 +82,9 @@ Args Helper::parseArgs(int argc, char* argv[]){
     return result;
 }
 
-void Helper::printResults(const std::unordered_map<std::string, std::string>& resultsPerProbe) {
-    for (const auto& kv : resultsPerProbe) {
-        std::cout << kv.first << " - " << kv.second << std::endl;
-    }
+void Helper::printResults(Scan& scan) {
+    scan.formatOutputString();
+    std::cout<<scan.outputString<<std::endl;
 }
 
 void Helper::printHelpMessage(){
@@ -97,6 +96,7 @@ void Helper::printHelpMessage(){
         "-u                    Scan UDP instead of TCP\n"
         "--ip <IP_PATTERN>     IP address or pattern to scan (e.g. 192.168.1.*, 127.0-10.0-24.*)\n"
         "--ports <PORTS>       Comma-separated list of ports/ranges (e.g. 80,443,1000-2000). Default is 0-1024\n"
+        "--out <FILEPATH>      Filepath of the file you want the results to be exported to. Only in .html, .md, .txt formats."
     <<std::endl;
 }
 
@@ -369,5 +369,14 @@ std::string Helper::formatHTML(std::string& output) {
         oss << "  <li><code>" << e << "</code></li>\n";
     }
     oss << "</ul>\n";
+    return oss.str();
+}
+
+std::string Helper::argvToString(int argc, char* argv[]) {
+    std::ostringstream oss;
+    for (int i = 0; i < argc; ++i) {
+        if (i > 0) oss << " ";       // add space between arguments
+        oss << argv[i];
+    }
     return oss.str();
 }

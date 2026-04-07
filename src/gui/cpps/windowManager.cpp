@@ -82,7 +82,8 @@ void WindowManager::createHelpWindow(){
         "-b                    Scan both TCP and UDP (default is TCP only)\n"
         "-u                    Scan UDP instead of TCP\n"
         "--ip <IP_PATTERN>     IP address or pattern to scan (e.g. 192.168.1.*, 127.0-10.0-24.*)\n"
-        "--ports <PORTS>       Comma-separated list of ports/ranges (e.g. 80,443,1000-2000). Default is 0-1024\n");
+        "--ports <PORTS>       Comma-separated list of ports/ranges (e.g. 80,443,1000-2000). Default is 0-1024\n"
+        "--out <FILEPATH>      Filepath of the file you want the results to be exported to. Only in .html, .md, .txt formats.");
 
     ImGui::End();
 }

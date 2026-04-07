@@ -12,6 +12,7 @@
 #include "servers/headers/udpServerSocket.h"
 #include "gui/headers/scan.h"
 #include <regex>
+#include <string>
 
 struct Args {
     std::vector<char> letters;                  // single-letter flags
@@ -37,12 +38,13 @@ class Helper{
     static void generateIPs(const std::vector<std::vector<int>>& octets, std::vector<std::string>& result, std::string current = "", size_t index = 0);
     static std::vector<std::string> expandIP(const std::string& ipPattern);
     static Args parseArgs(int argc, char* argv[]);
-    static void printResults(const std::unordered_map<std::string, std::string>& resultsPerProbe);
+    static void printResults(Scan& scan);
     static void printHelpMessage();
     static std::string getExtension(std::string& filename);
     static bool exportResults(Scan* scan, std::string& filename);
     static std::vector<std::string> splitByIP(std::string& input);
     static std::string formatMD(std::string& output);
     static std::string formatHTML(std::string& output);
+    static std::string argvToString(int argc, char* argv[]);
     static std::unordered_map<std::string, std::string> portscan(int argc, char* argv[]);
 };

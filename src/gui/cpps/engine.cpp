@@ -122,7 +122,7 @@ void Engine::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
     if (key == GLFW_KEY_UP) {
         Engine::historyMutex.lock();
         if (!history.empty()) {
-            selectedScan = (selectedScan - 1 + history.size()) % history.size();
+            selectedScan = (selectedScan + 1 + history.size()) % history.size();
             std::strcpy(Engine::currentCommand, Engine::history[Engine::selectedScan]->command.c_str());
         }
         Engine::historyMutex.unlock();
@@ -130,7 +130,7 @@ void Engine::keyCallback(GLFWwindow* window, int key, int scancode, int action, 
     else if (key == GLFW_KEY_DOWN) {
         Engine::historyMutex.lock();
         if (!history.empty()) {
-            selectedScan = (selectedScan + 1 + history.size()) % history.size();
+            selectedScan = (selectedScan - 1 + history.size()) % history.size();
             std::strcpy(Engine::currentCommand, Engine::history[Engine::selectedScan]->command.c_str());
         }
         Engine::historyMutex.unlock();
