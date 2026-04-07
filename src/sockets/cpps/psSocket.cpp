@@ -110,12 +110,15 @@ std::string psSocket::analyseBanner(std::string response){
     if(response.rfind("220", 0) == 0){
         std::string firstLine = response.substr(0, response.find("\n"));
 
-        if(response.find("SMTP") != std::string::npos ||
-           response.find("ESMTP") != std::string::npos){
+        if((response.find("SMTP") != std::string::npos ||
+            response.find("ESMTP") != std::string::npos) &&
+            response.find("FTP") == std::string::npos &&
+            response.find("FTPd") == std::string::npos){
             return "[+] SMTP detected | Banner: " + firstLine + "\n";
         }
 
-        if(response.find("FTP") != std::string::npos){
+        if(response.find("FTP") != std::string::npos ||
+            response.find("FTPd") != std::string::npos){
             return "[+] FTP detected | Banner: " + firstLine + "\n";
         }
 
@@ -287,4 +290,66 @@ std::string psSocket::analyseHTTPS(std::string response) {
     result += "\n";
 
     return result;
+}
+
+std::vector<uint8_t> psSocket::buildTFTPRequest(const std::string& filename) {
+    std::vector<uint8_t> packet;
+
+    // Opcode: RRQ (1)
+    uint16_t opcode = htons(1);
+    packet.insert(packet.end(), (uint8_t*)&opcode, (uint8_t*)&opcode + 2);
+
+    // Filename
+    packet.insert(packet.end(), filename.begin(), filename.end());
+    packet.push_back(0x00);
+
+    // Mode ("octet" = binary)
+    std::string mode = "octet";
+    packet.insert(packet.end(), mode.begin(), mode.end());
+    packet.push_back(0x00);
+
+    return packet;
+}
+
+bool psSocket::isValidTFTP(Response& res) {
+    if (res.length < 4) return false;
+    const uint8_t* buf = reinterpret_cast<const uint8_t*>(res.data);
+    uint16_t opcode = (buf[0] << 8) | buf[1];
+
+    switch (opcode) {
+        case 3: { // DATA
+            if (res.length < 4) return false;
+
+            size_t dataSize = res.length - 4;
+            if (dataSize > 512) return false;
+
+            return true;
+        }
+
+        case 4: { // ACK
+            return res.length == 4;
+        }
+
+        case 5: { // ERROR
+            if (res.length < 5) return false;
+
+            // must end with null terminator
+            if (buf[res.length - 1] != 0x00) return false;
+
+            return true;
+        }
+
+        case 1: // RRQ
+        case 2: { // WRQ
+            // look for at least 2 null bytes
+            int nulls = 0;
+            for (int i = 2; i < res.length; i++) {
+                if (buf[i] == 0x00) nulls++;
+            }
+            return nulls >= 2;
+        }
+
+        default:
+            return false;
+    }
 }

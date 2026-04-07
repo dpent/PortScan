@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <array>
+#include <cstring>
 
 #ifdef _WIN32
 #define NOMINMAX
@@ -48,6 +50,9 @@ class psSocket{ // Base socket class. Is the OS agnostic interface.
         static std::vector<uint8_t> buildNTPQuery();
         static std::vector<uint8_t> buildSNMPQuery();
         static std::vector<uint8_t> buildTLSClientHello();
+        static std::vector<uint8_t> buildTFTPRequest(const std::string& filename);
+        static bool isValidTFTP(Response& response);
+
         virtual bool connectTo(const char* ip, int port);
         virtual void disconnect();
         virtual bool sendBytes(char* buffer, int length);

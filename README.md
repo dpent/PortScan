@@ -6,7 +6,7 @@ This program uses **TCP/UDP** and tries to find out what open ports do. For exam
 
 ## Features
 - Can export results in html, markdown or text form.
-- Scans for HTTP/HTTPS, SSH, FTP, SMTP/ESMTP, DNS and maybe NTP and SNMP.
+- Scans for HTTP/HTTPS, SSH, FTP, SMTP/ESMTP, DNS, TFTP, NTP and maybe SNMP.
 - The GUI version can store old commands for easy reuse.
 - You can also run multiple scans at the same time using multiple threads if you are on the GUI version
 

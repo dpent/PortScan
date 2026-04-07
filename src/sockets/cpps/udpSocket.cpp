@@ -32,7 +32,7 @@ bool UDPSocket::connectTo(const char* ip, int port){
 
     inet_pton(AF_INET, ip, &addr.sin_addr);
     #endif
-    return ::connect(s, (sockaddr*)&addr, sizeof(addr)) == 0;
+    return true;
 }
 
 void UDPSocket::disconnect(){
@@ -94,8 +94,6 @@ std::string UDPSocket::scanPort(const char* ip, int port){
     
         disconnect();
 
-    }else{
-
     }
 
     if(connectTo(ip, port)){
@@ -104,6 +102,7 @@ std::string UDPSocket::scanPort(const char* ip, int port){
 
         //Send mock DNS query
         std::vector<uint8_t> query = psSocket::buildDNSQuery("google.com");
+        sendBytes((char*)query.data(), static_cast<int>(query.size()));
         sendBytes((char*)query.data(), static_cast<int>(query.size()));
     
         Response response = receiveBytes();
@@ -116,7 +115,25 @@ std::string UDPSocket::scanPort(const char* ip, int port){
     
         disconnect();
 
-    }else{
+    }
+
+    if(connectTo(ip, port)){
+
+        scanResult = "[-] No response (open|filtered|closed)";
+
+        //Send mock TFTP query
+        std::vector<uint8_t> query = psSocket::buildTFTPRequest("randomFile.txt");
+        sendBytes((char*)query.data(), static_cast<int>(query.size()));
+
+        Response response = receiveBytes();
+        if(psSocket::isValidTFTP(response)){
+    
+            scanResult = "[+] TFTP Detected. Got a response to a mock TFTP query.\n";
+            delete[] response.data;
+            return scanResult;
+        }
+    
+        disconnect();
 
     }
 
@@ -125,7 +142,6 @@ std::string UDPSocket::scanPort(const char* ip, int port){
         scanResult = "[-] No response (open|filtered|closed)";
         //std::cout<<"Connected to port "<<port<<std::endl;
         
-        //Send mock SNMP query
         std::vector<uint8_t> query = psSocket::buildSNMPQuery();
         sendBytes((char*)query.data(), static_cast<int>(query.size()));
         //std::cout<<"Sent data"<<std::endl;
@@ -133,16 +149,16 @@ std::string UDPSocket::scanPort(const char* ip, int port){
         Response response = receiveBytes();
         if(response.data && response.length > 10){
 
-            scanResult = "[+] SNMP Detected. Got a response to a mock SNMP query.\n";
+            if (response.data[0] == 0x30 && response.data[2] == 0x00) {
+                scanResult = "[+] SNMP Detected. Got a valid-looking SNMP response.\n";
+            } else {
+                scanResult = "[-] Response received, but doesn't look like SNMP.\n";
+            }
             delete[] response.data;
             return scanResult;
         }
 
         disconnect();
-
-        //std::cout<<"Disconnected"<<std::endl;
-    }else{
-        //std::cout<<"Failed to connect"<<std::endl;
     }
 
     return scanResult;

@@ -88,7 +88,7 @@ void Scan::findIpsAndPortsScanned(){
                     std::vector<int> parsedPorts = Helper::parseOctet(portPart);
                     portsScanned.insert(portsScanned.end(), parsedPorts.begin(), parsedPorts.end());
                 }
-                portRegex = portPart;    
+                portRegex = value;    
             }
         }
     }

@@ -183,8 +183,12 @@ std::unordered_map<std::string, std::string> Helper::portscan(int argc, char* ar
         for(const std::string& ip : ipsToScan){
             for(int& port : portsToScan){
 
-                if(resultsPerProbe.count(ip + ":" + std::to_string(port))){
-                    continue; // already have a result from TCP scan
+                std::string key = ip + ":" + std::to_string(port);
+
+                // Check if TCP gave a result
+                auto it = resultsPerProbe.find(key);
+                if (it != resultsPerProbe.end() && it->second != "[-] Connection failed") {
+                    continue;
                 }
 
                 std::string result = socket->scanPort(ip.c_str(), port);
