@@ -2,22 +2,24 @@
 Port mapper using Berkeley sockets for Linux/Mac and Winsock for Windows.
 
 ## Description
-This program uses **TCP/UDP** and tries to find out what open ports do. For example it can detect HTTP, HTTPS and SSH protocols running through ports. There is a terminal and a GUI version all in this repo.
+PortScan is a TCP/UDP port scanner written in C++ that detects open ports and attempts to identify the services running on them (e.g. HTTP, HTTPS, SSH).
+
+It includes both a command-line interface (CLI) and a graphical user interface (GUI).
 
 ## Features
-- Can export results in html, markdown or text form.
-- Scans for HTTP/HTTPS, SSH, FTP, SMTP/ESMTP, DNS, TFTP, NTP and maybe SNMP.
-- The GUI version can store old commands for easy reuse.
-- You can also run multiple scans at the same time using multiple threads if you are on the GUI version
+- Export scan results in HTML, Markdown, or plain text
+- Detect common protocols: HTTP/HTTPS, SSH, FTP, SMTP/ESMTP, DNS, TFTP, NTP, SNMP (experimental)
+- GUI version supports command history and simultanious scans using threads.
 
-## Libraries
-This repo uses ImGui, glfw and glad.
+## Third-Party Libraries
+This project uses the following libraries:
+[ImGui](https://github.com/ocornut/imgui), [glfw](https://github.com/glfw/glfw) and [glad](https://glad.dav1d.de/).
 
-## Stack
-1. C++ 20
-2. cmake 3.10 or higher
+## Requirements
+- C++20 compatible compiler
+- CMake 3.10 or higher
 
-## Controls
+## Usage
 Type -h when performing a scan to get the help menu. It should look like this
 ```bash
 Output:
@@ -32,8 +34,25 @@ Options:
 --out <FILEPATH>      Filepath of the file you want the results to be exported to. Only in .html, .md, .txt formats.
 
 ```
+### Example
+- The following command scans all IPv4s that start with 192.168.1 and targets ports 80 and 433. -v means that failure to connect or simply not getting an answer from a port will be displayed.
+```bash
+portscan --ip 192.168.1.* --ports 80,443 -v
+```
+- The following scans ports 0-1024 using TCP on 127.0.0.1. It then exports the file in markdown format. This filepath means it will be written on the current working directory.
+```bash
+portscan --ip 127.0.0.1 --out results.md
+```
 
-## Build steps
+- The same thing but using UDP
+```bash
+portscan --ip 127.0.0.1 -u --out results.md
+```
+
+- The same thing but doing one pass using TCP and one using UDP
+```bash
+portscan --ip 127.0.0.1 -b --out results.md
+```
 
 - Clone this repository
 ```bash
