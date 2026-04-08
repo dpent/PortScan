@@ -52,6 +52,8 @@ class psSocket{ // Base socket class. Is the OS agnostic interface.
         static std::vector<uint8_t> buildTLSClientHello();
         static std::vector<uint8_t> buildTFTPRequest(const std::string& filename);
         static bool isValidTFTP(Response& response);
+        static bool isValidDNS(Response& res);
+        static bool isValidNTP(Response& res);
 
         virtual bool connectTo(const char* ip, int port);
         virtual void disconnect();

@@ -18,14 +18,14 @@ bool UDPSocket::connectTo(const char* ip, int port){
     
     #ifdef _WIN32
 
-    DWORD timeout = 2000; // 2 seconds in ms
+    DWORD timeout = 1000;
     setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 
     inet_pton(AF_INET, ip, &(addr.sin_addr));
     #else
 
     timeval tv;
-    tv.tv_sec = 2;   // 2 seconds
+    tv.tv_sec = 1;
     tv.tv_usec = 0;
 
     setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
@@ -81,84 +81,39 @@ std::string UDPSocket::scanPort(const char* ip, int port){
         scanResult = "[-] No response (open|filtered|closed)";
 
         //Send mock NTP query
-        std::vector<uint8_t> query = psSocket::buildNTPQuery();
-        sendBytes((char*)query.data(), static_cast<int>(query.size()));
-    
-        Response response = receiveBytes();
-        if(response.data && response.length >= 48){
-    
-            scanResult = "[+] NTP Detected. Got a response to a mock NTP query.\n";
-            delete[] response.data;
-            return scanResult;
-        }
-    
-        disconnect();
-
-    }
-
-    if(connectTo(ip, port)){
-
-        scanResult = "[-] No response (open|filtered|closed)";
+        std::vector<uint8_t> ntpQuery = psSocket::buildNTPQuery();
+        sendBytes((char*)ntpQuery.data(), static_cast<int>(ntpQuery.size()));
 
         //Send mock DNS query
-        std::vector<uint8_t> query = psSocket::buildDNSQuery("google.com");
-        sendBytes((char*)query.data(), static_cast<int>(query.size()));
-        sendBytes((char*)query.data(), static_cast<int>(query.size()));
-    
-        Response response = receiveBytes();
-        if(response.data && response.length >= 48){
-    
-            scanResult = "[+] DNS Detected. Got a response to a mock DNS query.\n";
-            delete[] response.data;
-            return scanResult;
-        }
-    
-        disconnect();
-
-    }
-
-    if(connectTo(ip, port)){
-
-        scanResult = "[-] No response (open|filtered|closed)";
+        std::vector<uint8_t> dnsQuery = psSocket::buildDNSQuery("google.com");
+        sendBytes((char*)dnsQuery.data(), static_cast<int>(dnsQuery.size()));
+        sendBytes((char*)dnsQuery.data(), static_cast<int>(dnsQuery.size()));
 
         //Send mock TFTP query
-        std::vector<uint8_t> query = psSocket::buildTFTPRequest("randomFile.txt");
-        sendBytes((char*)query.data(), static_cast<int>(query.size()));
+        std::vector<uint8_t> tftpQuery = psSocket::buildTFTPRequest("randomFile.txt");
+        sendBytes((char*)tftpQuery.data(), static_cast<int>(tftpQuery.size()));
 
-        Response response = receiveBytes();
-        if(psSocket::isValidTFTP(response)){
+        //Send mock SNMP query
+        std::vector<uint8_t> snmpQuery = psSocket::buildSNMPQuery();
+        sendBytes((char*)snmpQuery.data(), static_cast<int>(snmpQuery.size()));
     
-            scanResult = "[+] TFTP Detected. Got a response to a mock TFTP query.\n";
-            delete[] response.data;
-            return scanResult;
-        }
-    
-        disconnect();
-
-    }
-
-    if(connectTo(ip, port)){
-
-        scanResult = "[-] No response (open|filtered|closed)";
-        //std::cout<<"Connected to port "<<port<<std::endl;
-        
-        std::vector<uint8_t> query = psSocket::buildSNMPQuery();
-        sendBytes((char*)query.data(), static_cast<int>(query.size()));
-        //std::cout<<"Sent data"<<std::endl;
-
         Response response = receiveBytes();
-        if(response.data && response.length > 10){
-
-            if (response.data[0] == 0x30 && response.data[2] == 0x00) {
+        if(response.data){
+            if(psSocket::isValidTFTP(response)){
+                scanResult = "[+] TFTP Detected. Got a response to a mock TFTP query.\n";
+            }else if(response.data[0] == 0x30 && response.data[2] == 0x00 && response.length > 10){
                 scanResult = "[+] SNMP Detected. Got a valid-looking SNMP response.\n";
-            } else {
-                scanResult = "[-] Response received, but doesn't look like SNMP.\n";
+            }else if(response.length >= 48 && psSocket::isValidDNS(response)){
+                scanResult = "[+] DNS Detected. Got a response to a mock DNS query.\n";
+            }else if(response.length >= 48 && psSocket::isValidNTP(response)){
+                scanResult = "[+] NTP Detected. Got a response to a mock NTP query.\n";
             }
+
             delete[] response.data;
             return scanResult;
         }
-
         disconnect();
+
     }
 
     return scanResult;

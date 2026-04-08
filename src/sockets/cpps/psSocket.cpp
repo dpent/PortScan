@@ -353,3 +353,68 @@ bool psSocket::isValidTFTP(Response& res) {
             return false;
     }
 }
+
+bool psSocket::isValidDNS(Response& res) {
+    if (res.length < 12) return false;
+
+    const uint8_t* buf = reinterpret_cast<const uint8_t*>(res.data);
+
+    // Extract header fields
+    uint16_t flags   = (buf[2] << 8) | buf[3];
+    uint16_t qdcount = (buf[4] << 8) | buf[5];
+    uint16_t ancount = (buf[6] << 8) | buf[7];
+    uint16_t nscount = (buf[8] << 8) | buf[9];
+    uint16_t arcount = (buf[10] << 8) | buf[11];
+
+    // Must be a response (QR bit = 1)
+    if ((flags & 0x8000) == 0) return false;
+
+    // Basic sanity checks
+    if (qdcount == 0) return false;
+
+    // At least one section should exist
+    if (ancount == 0 && nscount == 0 && arcount == 0)
+        return false;
+
+    // Optional: check RCODE (lower 4 bits of flags)
+    uint8_t rcode = flags & 0x000F;
+    if (rcode > 5) return false; // valid DNS error codes are 0–5
+
+    return true;
+}
+
+bool psSocket::isValidNTP(Response& res) {
+    if (res.length < 48) return false;
+
+    const uint8_t* buf = reinterpret_cast<const uint8_t*>(res.data);
+
+    uint8_t li_vn_mode = buf[0];
+
+    uint8_t mode = li_vn_mode & 0x07;        // last 3 bits
+    uint8_t version = (li_vn_mode >> 3) & 0x07;
+
+    // Must be server response (mode 4) or broadcast (5)
+    if (mode != 4 && mode != 5) return false;
+
+    // Reasonable version check (NTPv3 or v4)
+    if (version < 3 || version > 4) return false;
+
+    uint8_t stratum = buf[1];
+
+    // Stratum valid range (0 = special "kiss of death")
+    if (stratum > 15) return false;
+
+    // Optional sanity: check transmit timestamp (bytes 40–47)
+    bool allZero = true;
+    for (int i = 40; i < 48; i++) {
+        if (buf[i] != 0x00) {
+            allZero = false;
+            break;
+        }
+    }
+
+    // A real response should usually have a non-zero transmit timestamp
+    if (allZero) return false;
+
+    return true;
+}

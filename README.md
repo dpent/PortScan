@@ -19,6 +19,9 @@ This project uses the following libraries:
 - C++20 compatible compiler
 - CMake 3.10 or higher
 
+## IMPORTANT
+- UDP can take a *long* time to finish. This is because i dont use multiple threads and it simply waits for up to 1 second for each port. Maybe in the future i will add async or multithreaded probes.
+
 ## Usage
 Type -h when performing a scan to get the help menu. It should look like this
 ```bash

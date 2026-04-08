@@ -212,7 +212,6 @@ std::unordered_map<std::string, std::string> Helper::portscan(int argc, char* ar
     }
 
     for(const std::string& ip : ipsToScan){
-
         for(int& port : portsToScan){
             std::string result = socket->scanPort(ip.c_str(), port);
             if(result == "Nothing on this port" || (verboseIt == args.letters.end() && result == "[-] Connection failed")
