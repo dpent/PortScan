@@ -43,7 +43,7 @@ git clone https://github.com/dpent/PortScan.git
 ## Linux
 0. You might need to install these
 ```bash
-sudo apt install libxinerama-dev && pkg-config && libxkbcommon-dev && libxcursor-dev && libxi-dev && libx11-dev && libxi-dev && libgl1-mesa-dev && libxrandr-dev && mesa-utils
+sudo apt install libxinerama-dev pkgconf libxkbcommon-dev libxcursor-dev libx11-dev libxi-dev libgl1-mesa-dev libxrandr-dev mesa-utils libglu1-mesa-dev wayland-protocols libwayland-dev
 ```
 
 ### Terminal
