@@ -108,7 +108,7 @@ void WindowManager::createOutputWindow(){
 
         ImGui::SeparatorText("IPv4s scanned");
 
-        float item_min_width = 80.0f; // tweak this
+        float item_min_width = 110.0f; // tweak this
         float available_width = ImGui::GetContentRegionAvail().x;
 
         int columns = (int)(available_width / item_min_width);
