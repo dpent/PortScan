@@ -82,7 +82,7 @@ std::string psSocket::analyseHTTP(std::string response){
 
 std::string psSocket::analyseBanner(std::string response){
     if(response.empty())
-        return "[-] No banner received";
+        return "";
 
     if(response.rfind("SSH-", 0) == 0){
         size_t end = response.find('\n');
@@ -125,7 +125,7 @@ std::string psSocket::analyseBanner(std::string response){
         return "[?] 220 response detected | Possible FTP/SMTP | Banner: " + firstLine + "\n";
     }
 
-    return "[-] Unknown protocol | Raw banner: " + response.substr(0, response.find("\n")) + "\n";
+    return "";
 }
 
 std::vector<uint8_t> psSocket::buildDNSQuery(std::string domain){
@@ -417,4 +417,259 @@ bool psSocket::isValidNTP(Response& res) {
     if (allZero) return false;
 
     return true;
+}
+
+std::vector<uint8_t> psSocket::buildTelnetProbe() {
+    return {
+        0xFF, 0xFB, 0x01, // IAC WILL ECHO
+        0xFF, 0xFB, 0x03, // IAC WILL SUPPRESS-GO-AHEAD
+        0xFF, 0xFD, 0x18  // IAC DO TERMINAL-TYPE
+    };
+}
+
+bool psSocket::isValidTelnet(Response& res) {
+    if (res.length < 2) return false;
+
+    const uint8_t* buf = reinterpret_cast<const uint8_t*>(res.data);
+
+    int iacCount = 0;
+
+    for (int i = 0; i < res.length - 1; i++) {
+        if (buf[i] == 0xFF) { // IAC
+            uint8_t cmd = buf[i + 1];
+
+            // Valid Telnet negotiation commands
+            if (cmd == 0xFB || // WILL
+                cmd == 0xFC || // WON'T
+                cmd == 0xFD || // DO
+                cmd == 0xFE) { // DON'T
+
+                iacCount++;
+
+                // Optional: skip option byte if present
+                if (i + 2 < res.length)
+                    i += 2;
+                else
+                    i += 1;
+            }
+        }
+    }
+
+    // Require at least one full IAC command
+    return iacCount > 0;
+}
+
+std::vector<uint8_t> psSocket::buildDHCPDiscover(uint32_t xid, std::vector<uint8_t> mac) {
+    std::vector<uint8_t> pkt;
+
+    pkt.reserve(300);
+
+    // BOOTP header (fixed 236 bytes)
+
+    pkt.push_back(1);   // op: BOOTREQUEST
+    pkt.push_back(1);   // htype: Ethernet
+    pkt.push_back(6);   // hlen
+    pkt.push_back(0);   // hops
+
+    // xid
+    pkt.push_back((xid >> 24) & 0xFF);
+    pkt.push_back((xid >> 16) & 0xFF);
+    pkt.push_back((xid >> 8) & 0xFF);
+    pkt.push_back(xid & 0xFF);
+
+    // secs
+    pkt.push_back(0);
+    pkt.push_back(0);
+
+    // flags (broadcast)
+    pkt.push_back(0x80);
+    pkt.push_back(0x00);
+
+    // ciaddr
+    for(int i=0;i<4;i++) pkt.push_back(0);
+
+    // yiaddr
+    for(int i=0;i<4;i++) pkt.push_back(0);
+
+    // siaddr
+    for(int i=0;i<4;i++) pkt.push_back(0);
+
+    // giaddr
+    for(int i=0;i<4;i++) pkt.push_back(0);
+
+    // chaddr (16 bytes, first 6 = MAC)
+    for(int i=0;i<6;i++) pkt.push_back(mac[i]);
+    for(int i=0;i<10;i++) pkt.push_back(0);
+
+    // sname (64 bytes)
+    for(int i=0;i<64;i++) pkt.push_back(0);
+
+    // file (128 bytes)
+    for(int i=0;i<128;i++) pkt.push_back(0);
+
+    // DHCP magic cookie
+    pkt.push_back(99);
+    pkt.push_back(130);
+    pkt.push_back(83);
+    pkt.push_back(99);
+
+    // DHCP Options
+
+    // DHCP Message Type
+    pkt.push_back(53);
+    pkt.push_back(1);
+    pkt.push_back(1); // Discover
+
+    // Parameter Request List (optional but common)
+    pkt.push_back(55);
+    pkt.push_back(3);
+    pkt.push_back(1); // subnet mask
+    pkt.push_back(3); // router
+    pkt.push_back(6); // DNS
+
+    // End option
+    pkt.push_back(255);
+
+    return pkt;
+}
+
+bool psSocket::isValidDHCP(Response& res) {
+    if (res.length < 240) return false; // minimum DHCP size
+
+    const uint8_t* buf = reinterpret_cast<const uint8_t*>(res.data);
+
+    // 1. Check BOOTP op code (1 = request, 2 = reply)
+    if (buf[0] != 2) return false;
+
+    // 2. Check DHCP magic cookie (offset 236)
+    if (buf[236] != 99 ||
+        buf[237] != 130 ||
+        buf[238] != 83 ||
+        buf[239] != 99) {
+        return false;
+    }
+
+    // 3. Look for DHCP Message Type option (53)
+    // Options start at byte 240
+    int i = 240;
+    bool hasMsgType = false;
+
+    while (i < res.length) {
+        uint8_t opt = buf[i];
+
+        if (opt == 255) break; // end option
+
+        if (opt == 0) { // padding
+            i++;
+            continue;
+        }
+
+        if (i + 1 >= res.length) break;
+
+        uint8_t len = buf[i + 1];
+
+        if (i + 2 + len > res.length) break;
+
+        if (opt == 53 && len == 1) {
+            uint8_t msgType = buf[i + 2];
+
+            // 2 = DHCPOFFER, 5 = DHCPACK
+            if (msgType == 2 || msgType == 5) {
+                hasMsgType = true;
+            }
+        }
+
+        i += 2 + len;
+    }
+
+    return hasMsgType;
+}
+
+uint32_t psSocket::getXid() {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_int_distribution<uint32_t> dist;
+
+    return dist(gen);
+}
+
+std::vector<uint8_t> psSocket::getRandomMac() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0, 255);
+
+    std::vector<uint8_t> mac(6);
+
+    for (int i = 0; i < 6; i++) {
+        mac[i] = static_cast<uint8_t>(dist(gen));
+    }
+
+    // Optional: set "locally administered" bit (recommended)
+    mac[0] |= 0x02; // locally administered
+    mac[0] &= 0xFE; // ensure unicast (not multicast)
+
+    return mac;
+}
+
+std::string psSocket::getBroadcastAddress(){
+
+#ifdef _WIN32
+    IP_ADAPTER_INFO adapterInfo[16];
+    DWORD bufLen = sizeof(adapterInfo);
+
+    if (GetAdaptersInfo(adapterInfo, &bufLen) != NO_ERROR)
+        return "";
+
+    for (PIP_ADAPTER_INFO adapter = adapterInfo; adapter != nullptr; adapter = adapter->Next) {
+        IP_ADDR_STRING* ipAddr = &adapter->IpAddressList;
+
+        while (ipAddr) {
+            unsigned long ip = inet_addr(ipAddr->IpAddress.String);
+            unsigned long mask = inet_addr(ipAddr->IpMask.String);
+
+            // Skip invalid / loopback
+            if (ip != 0 && mask != 0 && ip != INADDR_LOOPBACK) {
+                unsigned long broadcast = (ip & mask) | (~mask);
+
+                struct in_addr addr;
+                addr.s_addr = broadcast;
+
+                return std::string(inet_ntoa(addr));
+            }
+
+            ipAddr = ipAddr->Next;
+        }
+    }
+
+    return "";
+#else
+    struct ifaddrs* ifaddr;
+
+    if (getifaddrs(&ifaddr) == -1)
+        return "";
+
+    for (struct ifaddrs* ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
+        if (!ifa->ifa_addr) continue;
+
+        if (ifa->ifa_addr->sa_family == AF_INET) {
+            // Skip loopback
+            if (ifa->ifa_flags & IFF_LOOPBACK) continue;
+
+            // Must support broadcast
+            if (!(ifa->ifa_flags & IFF_BROADCAST)) continue;
+
+            sockaddr_in* broad = (sockaddr_in*)ifa->ifa_broadaddr;
+            if (broad) {
+                char buf[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, &broad->sin_addr, buf, sizeof(buf));
+
+                freeifaddrs(ifaddr);
+                return std::string(buf);
+            }
+        }
+    }
+
+    freeifaddrs(ifaddr);
+    return "";
+#endif
 }

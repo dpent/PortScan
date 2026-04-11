@@ -8,7 +8,7 @@ It includes both a command-line interface (CLI) and a graphical user interface (
 
 ## Features
 - Export scan results in HTML, Markdown, or plain text
-- Detect common protocols: HTTP/HTTPS, SSH, FTP, SMTP/ESMTP, DNS, TFTP, NTP, SNMP (experimental)
+- Detect common protocols: HTTP/HTTPS, Telnet, SSH, FTP, SMTP/ESMTP, DNS, TFTP, NTP, SNMP (experimental)
 - GUI version supports command history and simultanious scans using threads.
 
 ## Third-Party Libraries
